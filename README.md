@@ -118,6 +118,27 @@ The restart case explicitly relaunched Bun. The OpenAI probe started a fresh loc
 
 ## Modules and request flow
 
+```mermaid
+flowchart TD
+    accTitle: Scheduling architecture
+    accDescr: The React care desk calls one Bun server. Chat returns a draft for review. Confirmed bookings go through scheduling, which checks the mock provider and saves the appointment in Neon.
+    browser["React care desk"]
+    subgraph bun["Bun server"]
+        api["HTTP routes"]
+        chat["Chat interpretation"]
+        schedule["Scheduling and storage"]
+        directory["Mock Zocdoc adapter<br/>Doctor and slot fixtures"]
+        api -->|Chat message| chat
+        api -->|Schedule or confirmed change| schedule
+        api -->|Doctor and slot lookup| directory
+        chat -->|Check appointments and availability| schedule
+        schedule -->|Check slots and confirm changes| directory
+    end
+    browser -->|Same-origin HTTP| api
+    chat <-->|Structured draft| openai["OpenAI Responses API"]
+    schedule -->|Read and write| neon[("Neon Postgres")]
+```
+
 See the [domain model](domain-model.md) for scheduling, chat, and eval terminology.
 
 | Module | Paths and public entry points |
