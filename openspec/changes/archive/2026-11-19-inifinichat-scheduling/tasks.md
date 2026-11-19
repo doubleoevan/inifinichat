@@ -29,4 +29,4 @@
 
 ## 5. Finish
 
-- [ ] 5.1 Verify the integrated app, complete the README and publish the final reviewed changes.
+- [x] 5.1 Verify the integrated app, complete the README and publish the final reviewed changes.

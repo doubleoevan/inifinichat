@@ -4,18 +4,32 @@ Inifinichat is a local appointment desk for one synthetic patient. One Bun proce
 
 ## Run locally
 
-Use Bun 1.4.3, Git and Node.js 22.20 or newer for dependency-cruiser. From the project root:
+Use Bun 1.4.3 and Git. The module checker supports Node.js 22, 24, and 26 or later. Final verification used Node.js 26.12.1. From the project root, run the following commands.
 
 ```sh
 bun install --frozen-lockfile
 test -f .env || cp .env.local .env
 bun run hooks:install
+```
+
+For the full demo, set two active assignments in the ignored `.env`: `OPENAI_API_KEY` for chat and `DATABASE_URL` for the Neon connection string. Keep the public `.env.local` as three commented examples. Then migrate, seed, and start the app from the same folder.
+
+```sh
+bun run db:seed
 bun run dev
 ```
 
 Open **http://127.0.0.1:3000**. Set `PORT` to choose a different port. The dev command builds the browser bundle and watches the server. After editing the browser code, run `bun run build:ui` and refresh.
 
-Without `DATABASE_URL`, the desk opens a labeled fixture preview and the mock directory. Booking and verified availability require Neon. Add an OpenAI key to the ignored `.env` to enable chat. `OPENAI_MODEL` defaults to `gpt-4.1-mini`. Each chat submission makes one bounded server-side call. Conversations live in page memory.
+For an offline preview, skip the seed and run `bun run dev` with an empty `DATABASE_URL`. The desk opens a labeled fixture schedule and mock directory. Booking and verified availability require Neon. The forms work without an OpenAI key. `OPENAI_MODEL` defaults to `gpt-4.1-mini`. Each chat submission makes one bounded server-side call.
+
+## Demo walkthrough
+
+1. Open **Find a doctor**. Search for **Chen** in **94110**. Maya and Mina appear. Select **View availability** for Maya and choose a Pacific-time slot.
+2. Enter a local note and choose **Confirm booking**. Refresh **Appointments** to see the saved visit. Restarting Bun with the same database also preserves the visit and keeps the slot occupied.
+3. Select **Reschedule**, choose another time at the same clinic, edit the note, and confirm. If someone has since taken the replacement slot, the original time and note remain together.
+4. Select **Cancel appointment** and confirm. Reopen the clinic’s availability to see the released slot. **Clear chat** clears only the conversation.
+5. In **Evals**, expand a case, compare the expected and observed state, and export any human labels you enter. Generate a report first with `bun run evals` on a fresh checkout.
 
 ## Neon Postgres
 
@@ -28,7 +42,7 @@ bun run db:seed
 bun run dev
 ```
 
-Keep real values in `.env`. `.env.local` is a public reference. Bun's SQL client reuses the pooled `DATABASE_URL` for app traffic. The migration and seed run together with `bun run db:seed`. They upgrade the original two-table scaffold in place and insert the synthetic patient and visit in the `inifinichat_demo` schema. Repeated seeds preserve the existing rows. A configured but unavailable database produces a service error.
+Bun's SQL client reuses the pooled `DATABASE_URL` for app traffic. The migration and seed run together with `bun run db:seed`. For setup, the seed prefers `DATABASE_URL_UNPOOLED` when Neon supplies it and otherwise uses `DATABASE_URL`. It upgrades the original scaffold in place and inserts missing records in `inifinichat_demo`. Repeated seeds preserve existing edits. A configured but unavailable database produces a service error.
 
 ## Check and build
 
@@ -46,7 +60,9 @@ Run the Neon integration tests after seeding. They use the configured database a
 RUN_NEON_TESTS=1 bun --env-file=.env test tests/scheduling-neon.test.ts
 ```
 
-The integrated smoke test booked a synthetic slot in Neon, edited its note in the browser, reloaded the page, and restarted Bun. The visit persisted and its slot stayed occupied. A conflicting reschedule preserved the original time and note. Canceling released the slot. A live OpenAI call returned validated search criteria. Both temporary bookings were removed after verification.
+Final verification ran from a clean copy. The production build, TypeScript check, and dependency check passed. All 21 regression tests passed with the Neon tests enabled. The default offline test command skips the two live database tests.
+
+Chrome booked a synthetic slot against Neon, edited its note, reloaded the page, and restarted Bun. The visit persisted and its slot stayed occupied. A conflicting reschedule preserved both the original time and note. Canceling released the slot. A live OpenAI cancellation draft and **Clear chat** both left the patient and schedule intact. Verification removed both temporary bookings. A separate disposable PostgreSQL check reran the seed twice and preserved edits to the seeded profile and visit.
 
 The hook validates the staged environment reference and rejects a tracked real environment file. It then runs the same offline dependency-cruiser policy before each commit. Stage all relevant source and checker inputs first. It checks that the worktree matches the index for those inputs. Build artifacts are in `dist/`. Start the built app from the project root.
 
@@ -100,16 +116,18 @@ These samples come from run `6e7ab359-a007-400d-b5ec-5ce35fe7669c` on November 1
 
 The restart case explicitly relaunched Bun. The OpenAI probe started a fresh local app process. Provider and database cache warmth were unrecorded. Each scenario has one observation in this sample.
 
-## Stage 2 ownership
+## Modules and request flow
 
-The feature worktrees start at Step 1 commit `017a602`. Their public interfaces are listed below.
-
-| Owner | Paths and public entry points |
+| Module | Paths and public entry points |
 | --- | --- |
-| Integration | `src/shared/contracts.ts` and `examples.ts`, `src/server/server.ts` and `config.ts`, `src/web/components/ui`, `src/web/lib/utils.ts`, root config, README, shared OpenSpec artifacts and Notion |
-| 2-a · Zocdoc | `src/zocdoc/mock.ts`, provider fixtures in `src/fixtures/demo.ts` and `tests/mock.test.ts`. The mock exposes `searchProviders`, `getAvailability`, `bookAppointment`, `cancelAppointment`, and `rescheduleAppointment`. |
-| 2-b · Appointments | `src/storage` and seed/migration, `src/conversation/openai.ts`, `src/server/http.ts`, scheduling service and API tests. `createSchedulingRoutes` serves the API, `readSchedule` loads the demo patient, and `changeAppointment` commits confirmed operations. |
-| 2-c · UI | `src/web` feature components, styles, HTTP client and UI tests. The shared UI primitives remain with integration. |
+| Browser | `src/web/care-desk.tsx` hosts visits, profile, directory, chat and evals. `src/web/lib/api.ts` calls the same-origin API using DTOs from `src/shared/contracts.ts`. |
+| HTTP | `src/server/server.ts` starts the loopback process. `startApp` in `src/server/app.ts` mounts assets and `createSchedulingRoutes` from `src/server/http.ts`. The handlers validate input and select the demo patient. |
+| Directory | `createMockZocdoc` in `src/zocdoc/mock.ts` uses deterministic providers and slots from `src/fixtures/demo.ts`. Storage filters occupied slots before the browser sees availability. |
+| Persistence | `src/storage/schedule.ts` exposes `readSchedule` and `changeAppointment`. The transaction in `src/storage/operations.ts` takes an injected provider interface and commits the result in Neon. `src/storage/seed.ts` runs the versioned migration. |
+| Conversation | `interpretChat` in `src/conversation/openai.ts` returns a structured draft. `resolveDraft` in `src/server/chat.ts` checks references and returns a selection for the browser to review. |
+| Evaluation | `evals/run.ts` writes local observations. `GET /api/evals` serves the latest report. `src/web/evals.tsx` holds reviewer choices in page memory until export. |
+
+For a booking, React sends the selected slot and request ID to Bun after confirmation. The service validates the mock provider’s response and commits the appointment and replay result together. The UI displays the committed snapshot. For chat, the server returns a draft through a separate route. Selecting a draft opens the same confirmation flow.
 
 ## HTTP contract
 
@@ -126,6 +144,7 @@ Success responses use the DTOs in `src/shared/contracts.ts`. Errors use `{ code,
 | `POST /api/appointments/:id/cancel` | Confirmed cancellation command |
 | `PATCH /api/appointments/:id` | Confirmed `edit-notes` or `reschedule` command. Rescheduling takes a replacement slot and optional notes. |
 | `POST /api/chat` | `{message, history?}` → `{reply, intent}`. The server validates the model's suggestion. The UI resolves the selected doctor, slot, or appointment and opens it for review. |
+| `GET /api/evals` | Latest local eval report, or HTTP 404 until the first run |
 
 Appointment commands require a UUID `requestId` and `confirmed: true` from the UI. The server selects the patient. A committed mutation will return `{requestId, appointment}`. Repeating the same request ID and payload returns the original result. Reusing the ID with different content returns a conflict. The desk shows a completed appointment change after Neon commits it.
 
@@ -137,6 +156,8 @@ The HTTP body limit is 8 KiB. A chat request accepts 1,500 characters per messag
 
 Search terms allow 80 characters and a five-digit ZIP. The provider result cap is 25. Notes allow 100 characters in the UI and the command schema. Cross-origin writes are rejected. Stable errors include `invalid_request`, `not_found`, `conflict`, `database_unavailable` and `provider_unavailable`.
 
-Neon stores the `patients`, `appointments`, and `appointment_operations` tables. A partial unique index reserves each confirmed slot. A short transaction commits the appointment change and the patient's request-ID result together. Canceling releases the slot. Local notes remain editable on canceled visits. Rescheduling keeps the same doctor and location and saves the replacement time and any note edit together. [OpenSpec design](openspec/changes/inifinichat-scheduling/design.md)
+Neon stores the `patients`, `appointments`, and `appointment_operations` tables. A partial unique index reserves each confirmed slot. Canceling releases the slot. Local notes remain editable on canceled visits. Rescheduling keeps the same doctor and location and saves the replacement time and any note edit together. [Scheduling specification](openspec/specs/appointment-scheduling/spec.md)
 
-The provider and all directory data are synthetic. Real Zocdoc authentication, live directory access, and handling an uncertain outcome after a provider timeout are deferred. The Evals tab exposes machine observations and lets a reviewer export a separate assessment.
+The demo serves one synthetic patient on loopback. Chat history lives in the open page, and the server sends OpenAI requests with `store: false`. The deployment consists of one Bun application and Neon. It requires no Redis, worker, job queue, or vector database.
+
+Real Zocdoc access (4-b), multiuser login, external appointment synchronization, hosted deployment, and durable chat transcripts are deferred. A real provider integration would need verified credentials and directory access, plus reconciliation for uncertain write outcomes.
