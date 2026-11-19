@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test"
 import { demoAppointment, slots } from "@/fixtures/demo"
-import { appointmentSchema, bookingSchema, intentSchema, limits, makeSlotId, searchSchema, slotSchema, visitUpdateSchema } from "@/shared/contracts"
+import { appointmentSchema, bookingSchema, intentSchema, limits, makeSlotId, searchSchema, slotSchema, appointmentUpdateSchema } from "@/shared/contracts"
 import { exampleBooking, exampleCriteria, exampleIntent, exampleNoteUpdate } from "@/shared/examples"
 import { readCommand } from "@/server/http"
 
@@ -26,8 +26,8 @@ test("note commands accept 100 characters and reject 101", async () => {
     body: JSON.stringify({ ...exampleNoteUpdate, notes }),
   })
   const notes = "x".repeat(limits.note)
-  expect(await readCommand(request(notes), visitUpdateSchema)).toEqual({ input: { ...exampleNoteUpdate, notes } })
-  const invalid = await readCommand(request(notes + "x"), visitUpdateSchema)
+  expect(await readCommand(request(notes), appointmentUpdateSchema)).toEqual({ input: { ...exampleNoteUpdate, notes } })
+  const invalid = await readCommand(request(notes + "x"), appointmentUpdateSchema)
   expect("error" in invalid && invalid.error.status).toBe(400)
   if ("error" in invalid) expect((await invalid.error.json()).code).toBe("invalid_request")
 })

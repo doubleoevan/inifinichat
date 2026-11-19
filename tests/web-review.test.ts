@@ -14,7 +14,7 @@ test("books the displayed shared example slot with a stable request ID", () => {
 })
 
 test("edits time and notes together and enforces the shared note limit", () => {
-  const input = { draft: { kind: "reschedule" as const, visit: demoAppointment, slot: slots[0] }, notes: "Bring referral", requestId: exampleBooking.requestId }
+  const input = { draft: { kind: "reschedule" as const, appointment: demoAppointment, slot: slots[0] }, notes: "Bring referral", requestId: exampleBooking.requestId }
   expect(confirmedCommand(input)).toEqual({
     url: "/api/appointments/demo-visit", method: "PATCH",
     body: { action: "reschedule", confirmed: true, notes: "Bring referral", requestId: exampleBooking.requestId, slotId: slots[0].id },
@@ -28,9 +28,9 @@ test("includes the whole selected local day across UTC midnight", () => {
   expect(inDateWindow(slot, { from: "2030-04-17", through: "" })).toBe(false)
 })
 
-test("a canceled visit keeps editable local notes and renders their contents as text", () => {
+test("a canceled appointment keeps editable local notes and renders their contents as text", () => {
   const canceled = { ...demoAppointment, status: "canceled" as const, notes: "<b>Call clinic</b>" }
-  const html = renderToStaticMarkup(createElement(Appointments, { visits: [canceled], onReview: () => {} }))
+  const html = renderToStaticMarkup(createElement(Appointments, { appointments: [canceled], onReview: () => {} }))
   expect(html).toContain("Edit notes")
   expect(html).toContain("&lt;b&gt;Call clinic&lt;/b&gt;")
   expect(html).not.toContain("Cancel appointment")

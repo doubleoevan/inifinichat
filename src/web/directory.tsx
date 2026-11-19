@@ -3,12 +3,12 @@ import { Search } from "lucide-react"
 import { limits, type Doctor, type DoctorSearch } from "@/shared/contracts"
 import { Input } from "./components/ui/input"
 import { getDoctors } from "./lib/api"
-import type { DateWindow, Review } from "./lib/review"
+import type { DateWindow, AppointmentReviewDraft } from "./lib/review"
 import { SlotChoices } from "./slot-choices"
 
 interface DirectoryProps {
   criteria?: DoctorSearch
-  onReview: (draft: Review) => void
+  onReview: (draft: AppointmentReviewDraft) => void
 }
 
 /** Searches doctors by name or specialty and filters available times in the clinic timezone. */

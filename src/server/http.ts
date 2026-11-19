@@ -2,7 +2,7 @@ import type { z } from "zod"
 import { interpretChat, isChatConfigured } from "@/conversation/openai"
 import {
   bookingSchema, cancellationSchema, chatRequestSchema, doctorSchema, idSchema, limits, profileUpdateSchema,
-  searchSchema, slotSchema, visitUpdateSchema, type ApiError, type Doctor, type SchedulingAdapter,
+  searchSchema, slotSchema, appointmentUpdateSchema, type ApiError, type DoctorDirectory,
 } from "@/shared/contracts"
 import {
   availableSlots, changeAppointment, providerCall, readAppointments, readPatient, readSchedule,
@@ -10,10 +10,8 @@ import {
 } from "@/storage/schedule"
 import { resolveDraft } from "./chat"
 
-type Directory = { adapter: SchedulingAdapter; listDoctors: () => Doctor[] }
-
-/** Compose the frozen Step 1 endpoints with an injected local provider. */
-export function createSchedulingRoutes(directory: Directory, model = { configured: isChatConfigured, interpret: interpretChat }) {
+/** Composes the scheduling routes with the configured doctor directory. */
+export function createSchedulingRoutes(directory: DoctorDirectory, model = { configured: isChatConfigured, interpret: interpretChat }) {
   return {
     "/api/schedule": { GET: () => serve(readSchedule) },
     "/api/patient": {
@@ -40,7 +38,7 @@ export function createSchedulingRoutes(directory: Directory, model = { configure
       POST: (request: Request) => write(request, bookingSchema, data =>
         changeAppointment(requireDatabase(), directory, { kind: "book", data })),
     },
-    "/api/appointments/:id": { PATCH: (request: Request) => write(request, visitUpdateSchema, data =>
+    "/api/appointments/:id": { PATCH: (request: Request) => write(request, appointmentUpdateSchema, data =>
       changeAppointment(requireDatabase(), directory, { kind: "update", id: routeId(request), data })) },
     "/api/appointments/:id/cancel": { POST: (request: Request) => write(request, cancellationSchema, data =>
       changeAppointment(requireDatabase(), directory, { kind: "cancel", id: routeId(request), data })) },

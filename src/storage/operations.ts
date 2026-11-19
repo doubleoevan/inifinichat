@@ -2,26 +2,21 @@ import type { SQL } from "bun"
 import { createHash } from "node:crypto"
 import type { z } from "zod"
 import { demoPatient } from "@/fixtures/demo"
-import { bookingSchema, cancellationSchema, operationResultSchema, slotSchema, visitUpdateSchema,
-  type ApiError, type Appointment, type Doctor, type SchedulingAdapter } from "@/shared/contracts"
+import { bookingSchema, cancellationSchema, operationResultSchema, slotSchema, appointmentUpdateSchema,
+  type ApiError, type Appointment, type DoctorDirectory } from "@/shared/contracts"
 import { appointmentFromRow } from "./appointment"
 
 export type AppointmentCommand =
   | { kind: "book"; data: z.infer<typeof bookingSchema> }
   | { kind: "cancel"; id: string; data: z.infer<typeof cancellationSchema> }
-  | { kind: "update"; id: string; data: z.infer<typeof visitUpdateSchema> }
-
-export interface Directory {
-  adapter: SchedulingAdapter
-  listDoctors: () => Doctor[]
-}
+  | { kind: "update"; id: string; data: z.infer<typeof appointmentUpdateSchema> }
 
 export class SchedulingError extends Error {
   constructor(public readonly code: ApiError["code"], message: string) { super(message) }
 }
 
 /** Commit a patient-owned change and its exact replay result together. */
-export async function changeAppointment(db: SQL, directory: Directory, command: AppointmentCommand) {
+export async function changeAppointment(db: SQL, directory: DoctorDirectory, command: AppointmentCommand) {
   // the HTTP schemas produce a consistent field order across equivalent JSON requests
   const requestId = command.data.requestId
   const hash = createHash("sha256").update(JSON.stringify(command)).digest("hex")
@@ -57,7 +52,7 @@ export async function changeAppointment(db: SQL, directory: Directory, command: 
   }
 }
 
-async function book(tx: SQL, directory: Directory, data: z.infer<typeof bookingSchema>): Promise<Appointment> {
+async function book(tx: SQL, directory: DoctorDirectory, data: z.infer<typeof bookingSchema>): Promise<Appointment> {
   // resolve the snapshot locally and exclude the patient's private notes from the provider call
   const { doctor, slot } = await resolveSlot(directory, data.slotId)
   await acknowledge(() => directory.adapter.bookAppointment({ slotId: slot.id, requestId: data.requestId, confirmed: true }))
@@ -68,7 +63,7 @@ async function book(tx: SQL, directory: Directory, data: z.infer<typeof bookingS
   return appointmentFromRow(row)
 }
 
-async function update(tx: SQL, directory: Directory, command: Exclude<AppointmentCommand, { kind: "book" }>): Promise<Appointment> {
+async function update(tx: SQL, directory: DoctorDirectory, command: Exclude<AppointmentCommand, { kind: "book" }>): Promise<Appointment> {
   // lock and check ownership before trusting any client-supplied appointment ID
   const [row] = await tx`SELECT * FROM inifinichat_demo.appointments
     WHERE id = ${command.id} AND patient_id = ${demoPatient.id} FOR UPDATE`
@@ -104,7 +99,7 @@ async function update(tx: SQL, directory: Directory, command: Exclude<Appointmen
 }
 
 /** Match the full canonical slot to a provider's candidate at this location. */
-export async function resolveSlot(directory: Directory, slotId: string) {
+export async function resolveSlot(directory: DoctorDirectory, slotId: string) {
   const [doctorId, locationId] = slotId.split("/")
   const doctor = directory.listDoctors().find(candidate => candidate.id === doctorId && candidate.locationId === locationId)
   if (!doctor) throw new SchedulingError("not_found", "Provider location not found.")

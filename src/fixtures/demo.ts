@@ -26,10 +26,10 @@ export const slots: Slot[] = [
   fixtureSlot(leila, "2030-04-18T22:00:00Z"),
 ]
 
-// the seeded visit remains readable outside the directory's fixture dates
-const firstVisit = fixtureSlot(maya, "2030-04-10T16:30:00Z")
+// the seeded appointment remains readable outside the directory's fixture dates
+const seededSlot = fixtureSlot(maya, "2030-04-10T16:30:00Z")
 export const demoAppointment: Appointment = {
-  id: "demo-visit", doctor: maya, startsAt: firstVisit.startsAt, slotId: firstVisit.id,
+  id: "demo-visit", doctor: maya, startsAt: seededSlot.startsAt, slotId: seededSlot.id,
   status: "confirmed", notes: "",
 }
 

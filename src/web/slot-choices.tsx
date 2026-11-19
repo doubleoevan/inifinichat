@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import type { Doctor, Slot } from "@/shared/contracts"
-import { formatVisitTime, getSlots } from "./lib/api"
+import { formatSlotTime, getSlots } from "./lib/api"
 import { inDateWindow, type DateWindow } from "./lib/review"
 
 interface SlotChoicesProps {
@@ -33,6 +33,6 @@ export function SlotChoices({ doctor, dateWindow, excludeId, onSelect }: SlotCho
   const available = slots.filter(slot => slot.id !== excludeId && (!dateWindow || inDateWindow(slot, dateWindow)))
   if (!available.length) return <p role="status">No openings in this window.</p>
   return <div className="slot-list" aria-label={`Available times for ${doctor.name}`}>
-    {available.map(slot => <button className="secondary" key={slot.id} onClick={() => onSelect(slot)}>{formatVisitTime(slot)}</button>)}
+    {available.map(slot => <button className="secondary" key={slot.id} onClick={() => onSelect(slot)}>{formatSlotTime(slot)}</button>)}
   </div>
 }

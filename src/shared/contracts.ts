@@ -41,7 +41,7 @@ export const slotSchema = z.strictObject({
 export const appointmentSchema = z.strictObject({
   id: idSchema, doctor: doctorSchema, slotId: slotIdSchema, startsAt: instantSchema,
   status: z.enum(["confirmed", "canceled"]), notes: noteSchema,
-}).refine(visit => visit.slotId === makeSlotId({ doctorId: visit.doctor.id, locationId: visit.doctor.locationId, startsAt: visit.startsAt }))
+}).refine(appointment => appointment.slotId === makeSlotId({ doctorId: appointment.doctor.id, locationId: appointment.doctor.locationId, startsAt: appointment.startsAt }))
 export const scheduleSchema = z.strictObject({
   patient: patientSchema, appointments: z.array(appointmentSchema), source: z.enum(["fixture", "neon"]),
 })
@@ -50,10 +50,12 @@ export const scheduleSchema = z.strictObject({
 const confirmation = { requestId: requestIdSchema, confirmed: z.literal(true) }
 export const bookingSchema = z.strictObject({ ...confirmation, slotId: slotIdSchema, notes: noteSchema.optional() })
 export const cancellationSchema = z.strictObject(confirmation)
-export const visitUpdateSchema = z.discriminatedUnion("action", [
+export const appointmentUpdateSchema = z.discriminatedUnion("action", [
   z.strictObject({ ...confirmation, action: z.literal("reschedule"), slotId: slotIdSchema, notes: noteSchema.optional() }),
   z.strictObject({ ...confirmation, action: z.literal("edit-notes"), notes: noteSchema }),
 ])
+/** @deprecated Use appointmentUpdateSchema. */
+export { appointmentUpdateSchema as visitUpdateSchema }
 export const operationResultSchema = z.strictObject({ requestId: requestIdSchema, appointment: appointmentSchema })
 export const errorCodeSchema = z.enum(["invalid_request", "not_found", "conflict", "database_unavailable", "provider_unavailable", "not_implemented", "forbidden", "unsupported_media_type", "payload_too_large"])
 export const apiErrorSchema = z.strictObject({ code: errorCodeSchema, error: z.string() })
@@ -91,6 +93,12 @@ export interface SchedulingAdapter {
   bookAppointment(command: z.infer<typeof bookingSchema>): Promise<{ providerReference: string }>
   cancelAppointment(command: { appointmentId: string; requestId: string }): Promise<{ providerReference: string }>
   rescheduleAppointment(command: { appointmentId: string; requestId: string; slotId: string }): Promise<{ providerReference: string }>
+}
+
+// directory access used by the scheduling routes and appointment transactions
+export interface DoctorDirectory {
+  adapter: SchedulingAdapter
+  listDoctors: () => Doctor[]
 }
 
 // the review UI and the local eval runner consume the same report format

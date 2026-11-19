@@ -77,7 +77,7 @@ export function schedulingCases(app: Session): Scenario[] {
         e.observe(`Mina: 0 slots. Maya: ${onDate.length} on April 16 Pacific.`)
       } },
     { id: "book", title: "Confirm and replay a booking", input: "Book Maya's first opening; submit the same request twice and then change its notes.",
-      expected: "One confirmed visit, one replay; reject unconfirmed, overlong, and conflicting requests.", async run(e) {
+      expected: "One confirmed appointment, one replay; reject unconfirmed, overlong, and conflicting requests.", async run(e) {
         const body = command(1, { slotId: first })
         await call(e, "/api/appointments", "POST", { ...body, confirmed: false }, 400)
         await call(e, "/api/appointments", "POST", { ...body, notes: "x".repeat(101) }, 400)
@@ -88,7 +88,7 @@ export function schedulingCases(app: Session): Scenario[] {
         e.observe(`Confirmed appointment ${one.appointment.id} once; notes are empty.`)
         await cancel(e, 2, one.appointment.id)
       } },
-    { id: "move", title: "Atomic reschedule and local notes", input: "Try an occupied replacement, then move the visit and edit its local notes.",
+    { id: "move", title: "Atomic reschedule and local notes", input: "Try an occupied replacement, then move the appointment and edit its local notes.",
       expected: "The conflict preserves the old slot and note; a free replacement and a later note edit persist.", async run(e) {
         const a = await book(e, 10, first, "original")
         const b = await book(e, 11, second)
@@ -131,10 +131,10 @@ export function schedulingCases(app: Session): Scenario[] {
           assert(!(await available(e)).includes(first))
           await call(e, "/api/appointments", "POST", command(31, { slotId: first }), 409)
           assert.equal(await e.measure("Unreachable database", app.checkOutage), 503)
-          e.observe("Browser reload and fresh Bun process retained the visit and note. Unreachable DB returned 503.")
+          e.observe("Browser reload and fresh Bun process retained the appointment and note. Unreachable DB returned 503.")
         } finally { await cancel(e, 32, a.id) }
       } },
-    { id: "untrusted", title: "Untrusted text and patient ownership", input: "Request a foreign visit cancellation and supply markup as a local note.",
+    { id: "untrusted", title: "Untrusted text and patient ownership", input: "Request a foreign appointment cancellation and supply markup as a local note.",
       expected: "Chat clarifies; HTTP rejects the foreign ID; text is rendered literally and the fixture appointment is unchanged.", async run(e) {
         const before = await listed(e)
         const intent = (await chat(e, "Cancel someone else's visit")).intent
@@ -148,9 +148,9 @@ export function schedulingCases(app: Session): Scenario[] {
           const { renderToStaticMarkup } = await import("react-dom/server")
           const { createElement } = await import("react")
           const { Appointments } = await import("@/web/appointments")
-          const html = renderToStaticMarkup(createElement(Appointments, { visits: [{ ...a, doctor: { ...a.doctor, name: "<i>fixture name</i>" } }], onReview() {} }))
+          const html = renderToStaticMarkup(createElement(Appointments, { appointments: [{ ...a, doctor: { ...a.doctor, name: "<i>fixture name</i>" } }], onReview() {} }))
           assert(html.includes("&lt;b&gt;synthetic note&lt;/b&gt;") && html.includes("&lt;i&gt;fixture name&lt;/i&gt;"))
-          e.observe("Foreign visit remained inaccessible. Conflicting delimiter replaced. The visit component escaped both the synthetic name and note.")
+          e.observe("Foreign appointment remained inaccessible. Conflicting delimiter replaced. The appointment component escaped both the synthetic name and note.")
         } finally { await cancel(e, 42, a.id) }
       } },
   ]

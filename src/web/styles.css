@@ -19,7 +19,7 @@ button:disabled { opacity: .55; cursor: default; }
 .patient, .detail, .intro, small { color: #52645a; }
 .patient { font-size: 13px; }
 h1, h2, h3, p { margin: 0; }
-h1, .visit h3 { font-family: "Source Serif 4", Georgia, serif; font-weight: 400; }
+h1, .appointment h3 { font-family: "Source Serif 4", Georgia, serif; font-weight: 400; }
 h1 { font-size: clamp(50px, 7vw, 78px); letter-spacing: -.055em; line-height: 1.15; margin: 52px 0 24px; }
 h2 { font-size: 20px; font-weight: 620; letter-spacing: -.035em; margin-bottom: 16px; }
 .tabs { display: flex; gap: 26px; border-bottom: 1px solid #ccd4ce; }
@@ -27,7 +27,7 @@ h2 { font-size: 20px; font-weight: 620; letter-spacing: -.035em; margin-bottom: 
 .tabs button[aria-pressed="true"] { border-color: #226b56; color: #17513f; }
 .workspace { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(275px, 1fr); gap: clamp(22px, 5vw, 64px); padding: 32px 0 64px; align-items: start; }
 .panel { border: 1px solid #cdd5cb; border-radius: 14px; background: #fffefa; padding: clamp(19px, 3vw, 32px); }
-.visit h3 { font-size: clamp(30px, 4vw, 44px); line-height: 1.2; letter-spacing: -.045em; margin: 18px 0; }
+.appointment h3 { font-size: clamp(30px, 4vw, 44px); line-height: 1.2; letter-spacing: -.045em; margin: 18px 0; }
 .specialty { color: #2b6855; font-size: 13px; font-weight: 650; }
 .status { font-size: 12px; text-transform: capitalize; background: #e1efdc; color: #27503e; border-radius: 1rem; padding: 4px 11px; }
 .detail { font-size: 14px; margin: 6px 0; }
@@ -66,7 +66,7 @@ small { font-size: 12px; }
 /* scheduling forms and clinic choices */
 .action-row, .slot-list { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 15px; }
 .slot-list { margin-top: 5px; }
-.visit + .visit { margin-top: 18px; }
+.appointment + .appointment { margin-top: 18px; }
 .note h4, .replacement h4 { font-size: 14px; font-weight: 650; margin: 0 0 5px; }
 .note p, .feedback, .profile span { font-size: 14px; overflow-wrap: anywhere; }
 .note p { white-space: pre-wrap; }

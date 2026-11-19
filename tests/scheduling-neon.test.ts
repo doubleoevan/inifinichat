@@ -30,7 +30,7 @@ test.skipIf(!runNeon)("real Neon operations survive restart, replay once, exclud
     const book = command({ slotId: first.id, notes: "original" })
     const [one, duplicate] = await Promise.all([probe.ok("/api/appointments", "POST", book), probe.ok("/api/appointments", "POST", book)])
     expect(duplicate).toEqual(one)
-    const visit = `/api/appointments/${one.appointment.id}`
+    const appointmentPath = `/api/appointments/${one.appointment.id}`
     expect((await probe.send("/api/appointments", "POST", { ...book, notes: "different" })).status).toBe(409)
     expect((await probe.send("/api/appointments", "POST", command({ slotId: first.id }))).status).toBe(409)
 
@@ -47,9 +47,9 @@ test.skipIf(!runNeon)("real Neon operations survive restart, replay once, exclud
     const competitors = await Promise.all([1, 2].map(() => probe.send("/api/appointments", "POST", command({ slotId: second.id }))))
     expect(competitors.map(response => response.status).sort()).toEqual([200, 409])
     const occupied = command({ action: "reschedule", slotId: second.id, notes: "must roll back" })
-    expect((await probe.send(visit, "PATCH", occupied)).status).toBe(409)
+    expect((await probe.send(appointmentPath, "PATCH", occupied)).status).toBe(409)
     const outage = command({ action: "reschedule", slotId: failed.id, notes: "must roll back" })
-    expect((await probe.send(visit, "PATCH", outage)).status).toBe(503)
+    expect((await probe.send(appointmentPath, "PATCH", outage)).status).toBe(503)
     const [logged] = await db`SELECT count(*)::int AS n FROM inifinichat_demo.appointment_operations
       WHERE patient_id = ${demoPatient.id} AND request_id IN ${db([occupied.requestId, outage.requestId])}`
     expect(logged.n).toBe(0)
@@ -57,11 +57,11 @@ test.skipIf(!runNeon)("real Neon operations survive restart, replay once, exclud
     expect(after).toEqual(one.appointment)
 
     // both the atomic reschedule and the local-only note edit persist
-    const moved = await probe.ok(visit, "PATCH", command({ action: "reschedule", slotId: third.id, notes: "changed" }))
+    const moved = await probe.ok(appointmentPath, "PATCH", command({ action: "reschedule", slotId: third.id, notes: "changed" }))
     expect([moved.appointment.slotId, moved.appointment.notes]).toEqual([third.id, "changed"])
     const edit = command({ action: "edit-notes", notes: "local only" })
-    expect((await probe.ok(visit, "PATCH", edit)).appointment.notes).toBe("local only")
-    expect((await probe.send(visit, "PATCH", { ...edit, notes: "x".repeat(101) })).status).toBe(400)
+    expect((await probe.ok(appointmentPath, "PATCH", edit)).appointment.notes).toBe("local only")
+    expect((await probe.send(appointmentPath, "PATCH", { ...edit, notes: "x".repeat(101) })).status).toBe(400)
 
     // a real appointment belonging to another owner remains invisible and unmodifiable
     await db.begin(async tx => {
@@ -78,17 +78,17 @@ test.skipIf(!runNeon)("real Neon operations survive restart, replay once, exclud
     // a cancellation releases the slot; a replay or new cancellation remains safe
     const cancel = command()
     const [canceled, racingUpdate] = await Promise.all([
-      probe.ok(visit + "/cancel", "POST", cancel),
-      probe.send(visit, "PATCH", command({ action: "reschedule", slotId: first.id })),
+      probe.ok(appointmentPath + "/cancel", "POST", cancel),
+      probe.send(appointmentPath, "PATCH", command({ action: "reschedule", slotId: first.id })),
     ])
     expect([200, 409]).toContain(racingUpdate.status)
     expect(canceled.appointment.status).toBe("canceled")
-    expect(await probe.ok(visit + "/cancel", "POST", cancel)).toEqual(canceled)
-    expect((await probe.ok(visit + "/cancel", "POST", command())).appointment.status).toBe("canceled")
+    expect(await probe.ok(appointmentPath + "/cancel", "POST", cancel)).toEqual(canceled)
+    expect((await probe.ok(appointmentPath + "/cancel", "POST", command())).appointment.status).toBe("canceled")
     const released = (await probe.ok(slotsPath)).map((item: Slot) => item.id)
     expect(released).toContain(third.id)
     expect(released).toContain(first.id)
-    expect((await probe.send(visit, "PATCH", command({ action: "reschedule", slotId: first.id }))).status).toBe(409)
+    expect((await probe.send(appointmentPath, "PATCH", command({ action: "reschedule", slotId: first.id }))).status).toBe(409)
     console.log("Neon PASS: book → Bun restart → same patient, notes and occupied slot → cancel → slot free.")
   } finally {
     // remove only records belonging to this run's synthetic namespace and request IDs

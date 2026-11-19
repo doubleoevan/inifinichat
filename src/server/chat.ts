@@ -24,19 +24,19 @@ export async function resolveDraft(draft: ModelDraft, context: DraftContext): Pr
   }
 
   // resolve an unspecified appointment only when the patient's selection is unambiguous
-  const visits = (await context.appointments()).filter(visit => draft.kind === "edit-notes" || visit.status === "confirmed")
-  const visit = draft.appointmentId === null
-    ? (visits.length === 1 ? visits[0] : undefined)
-    : visits.find(candidate => candidate.id === draft.appointmentId)
-  if (!visit) return clarify("Which of your appointments would you like to change? Select it from your appointments.")
+  const appointments = (await context.appointments()).filter(appointment => draft.kind === "edit-notes" || appointment.status === "confirmed")
+  const appointment = draft.appointmentId === null
+    ? (appointments.length === 1 ? appointments[0] : undefined)
+    : appointments.find(candidate => candidate.id === draft.appointmentId)
+  if (!appointment) return clarify("Which of your appointments would you like to change? Select it from your appointments.")
 
-  if (draft.kind === "cancel") return reply("Review this appointment before confirming cancellation.", { kind: "cancel", appointmentId: visit.id })
-  if (draft.kind === "edit-notes") return reply("Review your local notes and confirm any edits.", { kind: "edit-notes", appointmentId: visit.id })
+  if (draft.kind === "cancel") return reply("Review this appointment before confirming cancellation.", { kind: "cancel", appointmentId: appointment.id })
+  if (draft.kind === "edit-notes") return reply("Review your local notes and confirm any edits.", { kind: "edit-notes", appointmentId: appointment.id })
 
   // a replacement belongs to the same doctor and location and has to be free
   const slot = slotIdSchema.safeParse(draft.slotId)
-  if (slot.success && slot.data.startsWith(`${visit.doctor.id}/${visit.doctor.locationId}/`) && await context.available(slot.data)) {
-    return reply("Review the replacement time before confirming.", { kind: "reschedule", appointmentId: visit.id, slotId: slot.data })
+  if (slot.success && slot.data.startsWith(`${appointment.doctor.id}/${appointment.doctor.locationId}/`) && await context.available(slot.data)) {
+    return reply("Review the replacement time before confirming.", { kind: "reschedule", appointmentId: appointment.id, slotId: slot.data })
   }
   return clarify("Select an available replacement time with the same doctor and location.")
 }

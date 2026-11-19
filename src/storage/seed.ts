@@ -15,11 +15,10 @@ try {
       VALUES (${demoPatient.id}, ${demoPatient.name}) ON CONFLICT (id) DO NOTHING`
 
     // keep one deterministic example for the first run
-    const visit = demoAppointment
     await tx`INSERT INTO inifinichat_demo.appointments
       (id, patient_id, doctor, provider_id, location_id, slot_id, starts_at, time_zone, status, notes)
-      VALUES (${visit.id}, ${demoPatient.id}, ${JSON.stringify(visit.doctor)}::text::jsonb, ${visit.doctor.id},
-        ${visit.doctor.locationId}, ${visit.slotId}, ${visit.startsAt}, ${visit.doctor.timeZone}, ${visit.status}, ${visit.notes})
+      VALUES (${demoAppointment.id}, ${demoPatient.id}, ${JSON.stringify(demoAppointment.doctor)}::text::jsonb, ${demoAppointment.doctor.id},
+        ${demoAppointment.doctor.locationId}, ${demoAppointment.slotId}, ${demoAppointment.startsAt}, ${demoAppointment.doctor.timeZone}, ${demoAppointment.status}, ${demoAppointment.notes})
       ON CONFLICT (id) DO NOTHING`
   })
   console.log("Appointment migration and synthetic seed committed.")

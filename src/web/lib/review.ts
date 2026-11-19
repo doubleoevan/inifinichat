@@ -1,10 +1,10 @@
-import { bookingSchema, cancellationSchema, visitUpdateSchema, type Appointment, type Doctor, type Slot } from "@/shared/contracts"
+import { bookingSchema, cancellationSchema, appointmentUpdateSchema, type Appointment, type Doctor, type Slot } from "@/shared/contracts"
 
 // confirmed writes are built from a patient-selected appointment or available slot
-export type Review =
+export type AppointmentReviewDraft =
   | { kind: "book"; doctor: Doctor; slot: Slot }
-  | { kind: "cancel" | "edit-notes"; visit: Appointment }
-  | { kind: "reschedule"; visit: Appointment; slot: Slot }
+  | { kind: "cancel" | "edit-notes"; appointment: Appointment }
+  | { kind: "reschedule"; appointment: Appointment; slot: Slot }
 
 export interface DateWindow { from: string; through: string }
 
@@ -17,7 +17,7 @@ export function inDateWindow(slot: Slot, window: DateWindow): boolean {
 }
 
 /** Constructs a validated command only after the patient confirms the review. */
-export function confirmedCommand(input: { draft: Review; requestId: string; notes: string }) {
+export function confirmedCommand(input: { draft: AppointmentReviewDraft; requestId: string; notes: string }) {
   const { draft, requestId, notes } = input
   const confirmation = { requestId, confirmed: true as const }
 
@@ -28,10 +28,10 @@ export function confirmedCommand(input: { draft: Review; requestId: string; note
   }
 
   // update the selected patient's appointment by its server-issued ID
-  const url = `/api/appointments/${encodeURIComponent(draft.visit.id)}`
+  const url = `/api/appointments/${encodeURIComponent(draft.appointment.id)}`
   if (draft.kind === "cancel") return {
     url: url + "/cancel", method: "POST" as const, body: cancellationSchema.parse(confirmation),
   }
   const edit = draft.kind === "reschedule" ? { action: draft.kind, slotId: draft.slot.id, notes } : { action: draft.kind, notes }
-  return { url, method: "PATCH" as const, body: visitUpdateSchema.parse({ ...confirmation, ...edit }) }
+  return { url, method: "PATCH" as const, body: appointmentUpdateSchema.parse({ ...confirmation, ...edit }) }
 }

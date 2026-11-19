@@ -1,6 +1,6 @@
 # Inifinichat
 
-Inifinichat is a local appointment desk for one synthetic patient. One Bun process serves a React interface and a JSON API on the loopback address. Search the synthetic directory, select an available slot, and confirm a booking. The desk lets you change the visit time, edit local notes, or cancel. Chat suggests actions for you to review.
+Inifinichat is a local appointment desk for one synthetic patient. One Bun process serves a React interface and a JSON API on the loopback address. Search the synthetic directory, select an available slot, and confirm a booking. The desk lets you change the appointment time, edit local notes, or cancel. Chat suggests actions for you to review.
 
 ## Run locally
 
@@ -26,7 +26,7 @@ For an offline preview, skip the seed and run `bun run dev` with an empty `DATAB
 ## Demo walkthrough
 
 1. Open **Find a doctor**. Search for **Chen** in **94110**. Maya and Mina appear. Select **View availability** for Maya and choose a Pacific-time slot.
-2. Enter a local note and choose **Confirm booking**. Refresh **Appointments** to see the saved visit. Restarting Bun with the same database also preserves the visit and keeps the slot occupied.
+2. Enter a local note and choose **Confirm booking**. Refresh **Appointments** to see the saved appointment. Restarting Bun with the same database also preserves the appointment and keeps the slot occupied.
 3. Select **Reschedule**, choose another time at the same clinic, edit the note, and confirm. If someone has since taken the replacement slot, the original time and note remain together.
 4. Select **Cancel appointment** and confirm. Reopen the clinic’s availability to see the released slot. **Clear chat** clears only the conversation.
 5. In **Evals**, expand a case, compare the expected and observed state, and export any human labels you enter. Generate a report first with `bun run evals` on a fresh checkout.
@@ -62,7 +62,7 @@ RUN_NEON_TESTS=1 bun --env-file=.env test tests/scheduling-neon.test.ts
 
 Final verification ran from a clean copy. The production build, TypeScript check, and dependency check passed. All 21 regression tests passed with the Neon tests enabled. The default offline test command skips the two live database tests.
 
-Chrome booked a synthetic slot against Neon, edited its note, reloaded the page, and restarted Bun. The visit persisted and its slot stayed occupied. A conflicting reschedule preserved both the original time and note. Canceling released the slot. A live OpenAI cancellation draft and **Clear chat** both left the patient and schedule intact. Verification removed both temporary bookings. A separate disposable PostgreSQL check reran the seed twice and preserved edits to the seeded profile and visit.
+Chrome booked a synthetic slot against Neon, edited its note, reloaded the page, and restarted Bun. The appointment persisted and its slot stayed occupied. A conflicting reschedule preserved both the original time and note. Canceling released the slot. A live OpenAI cancellation draft and **Clear chat** both left the patient and schedule intact. Verification removed both temporary bookings. A separate disposable PostgreSQL check reran the seed twice and preserved edits to the seeded profile and appointment.
 
 The hook validates the staged environment reference and rejects a tracked real environment file. It then runs the same offline dependency-cruiser policy before each commit. Stage all relevant source and checker inputs first. It checks that the worktree matches the index for those inputs. Build artifacts are in `dist/`. Start the built app from the project root.
 
@@ -118,9 +118,11 @@ The restart case explicitly relaunched Bun. The OpenAI probe started a fresh loc
 
 ## Modules and request flow
 
+See the [domain model](domain-model.md) for scheduling, chat, and eval terminology.
+
 | Module | Paths and public entry points |
 | --- | --- |
-| Browser | `src/web/care-desk.tsx` hosts visits, profile, directory, chat and evals. `src/web/lib/api.ts` calls the same-origin API using DTOs from `src/shared/contracts.ts`. |
+| Browser | `src/web/care-desk.tsx` hosts appointments, profile, directory, chat and evals. `src/web/lib/api.ts` calls the same-origin API using DTOs from `src/shared/contracts.ts`. |
 | HTTP | `src/server/server.ts` starts the loopback process. `startApp` in `src/server/app.ts` mounts assets and `createSchedulingRoutes` from `src/server/http.ts`. The handlers validate input and select the demo patient. |
 | Directory | `createMockZocdoc` in `src/zocdoc/mock.ts` uses deterministic providers and slots from `src/fixtures/demo.ts`. Storage filters occupied slots before the browser sees availability. |
 | Persistence | `src/storage/schedule.ts` exposes `readSchedule` and `changeAppointment`. The transaction in `src/storage/operations.ts` takes an injected provider interface and commits the result in Neon. `src/storage/seed.ts` runs the versioned migration. |
@@ -148,15 +150,15 @@ Success responses use the DTOs in `src/shared/contracts.ts`. Errors use `{ code,
 
 Appointment commands require a UUID `requestId` and `confirmed: true` from the UI. The server selects the patient. A committed mutation will return `{requestId, appointment}`. Repeating the same request ID and payload returns the original result. Reusing the ID with different content returns a conflict. The desk shows a completed appointment change after Neon commits it.
 
-Slot IDs use `providerId/locationId/UTC-instant`, for example `maya-chen/mission/2030-04-16T17:30:00.000Z`. The location carries its IANA timezone. The directory’s From and Through filters use each clinic’s local date. The synthetic directory offers 30-minute openings on April 16–18, 2030, in Pacific time. Search for **Chen** in **94110** to see two providers. Maya has three candidate slots and Mina has none. Occupied and past slots are excluded from availability. `ZOCDOC_MODE` defaults to `mock` and rejects other values.
+Slot IDs use `doctorId/locationId/UTC-instant`, for example `maya-chen/mission/2030-04-16T17:30:00.000Z`. The location carries its IANA timezone. The directory’s From and Through filters use each clinic’s local date. The synthetic directory offers 30-minute openings on April 16–18, 2030, in Pacific time. Search for **Chen** in **94110** to see two providers. Maya has three candidate slots and Mina has none. Occupied and past slots are excluded from availability. `ZOCDOC_MODE` defaults to `mock` and rejects other values.
 
 ## Limits and state
 
-The HTTP body limit is 8 KiB. A chat request accepts 1,500 characters per message and at most six history entries. The server makes one OpenAI call with a 20-second timeout and a 250-token output cap. Provider records, visit notes and contact data stay out of the current model prompt. The model has no tools or authority to confirm a write. The browser renders text through React.
+The HTTP body limit is 8 KiB. A chat request accepts 1,500 characters per message and at most six history entries. The server makes one OpenAI call with a 20-second timeout and a 250-token output cap. Provider records, appointment notes and contact data stay out of the current model prompt. The model has no tools or authority to confirm a write. The browser renders text through React.
 
 Search terms allow 80 characters and a five-digit ZIP. The provider result cap is 25. Notes allow 100 characters in the UI and the command schema. Cross-origin writes are rejected. Stable errors include `invalid_request`, `not_found`, `conflict`, `database_unavailable` and `provider_unavailable`.
 
-Neon stores the `patients`, `appointments`, and `appointment_operations` tables. A partial unique index reserves each confirmed slot. Canceling releases the slot. Local notes remain editable on canceled visits. Rescheduling keeps the same doctor and location and saves the replacement time and any note edit together. [Scheduling specification](openspec/specs/appointment-scheduling/spec.md)
+Neon stores the `patients`, `appointments`, and `appointment_operations` tables. A partial unique index reserves each confirmed slot. Canceling releases the slot. Local notes remain editable on canceled appointments. Rescheduling keeps the same doctor and location and saves the replacement time and any note edit together. [Scheduling specification](openspec/specs/appointment-scheduling/spec.md)
 
 The demo serves one synthetic patient on loopback. Chat history lives in the open page, and the server sends OpenAI requests with `store: false`. The deployment consists of one Bun application and Neon. It requires no Redis, worker, job queue, or vector database.
 

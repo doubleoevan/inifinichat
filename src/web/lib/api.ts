@@ -33,8 +33,8 @@ export async function getSlots(doctor: Doctor, signal?: AbortSignal): Promise<Sl
   return slotSchema.array().parse(values).filter(slot => slot.doctorId === doctor.id && slot.locationId === doctor.locationId)
 }
 
-/** Formats the appointment in the clinic's local time zone. */
-export function formatVisitTime({ startsAt, timeZone }: { startsAt: string; timeZone: string }): string {
+/** Formats a slot's start time in the clinic's time zone. */
+export function formatSlotTime({ startsAt, timeZone }: { startsAt: string; timeZone: string }): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
     timeZone, timeZoneName: "short",

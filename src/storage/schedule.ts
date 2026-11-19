@@ -38,7 +38,7 @@ export async function updatePatient(name: string): Promise<Patient> {
   return patientSchema.parse(row)
 }
 
-/** Return the patient's own visits in a stable display order. */
+/** Return the patient's own appointments in a stable display order. */
 export async function readAppointments(db: SQL = requireDatabase()): Promise<Appointment[]> {
   const rows = await db`SELECT * FROM inifinichat_demo.appointments WHERE patient_id = ${demoPatient.id}
     ORDER BY starts_at, id`

@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import { limits, operationResultSchema, type Appointment, type Patient } from "@/shared/contracts"
 import { Textarea } from "./components/ui/textarea"
-import { formatVisitTime, sendJson } from "./lib/api"
-import { confirmedCommand, type Review } from "./lib/review"
+import { formatSlotTime, sendJson } from "./lib/api"
+import { confirmedCommand, type AppointmentReviewDraft } from "./lib/review"
 
-interface ReviewProps {
-  draft: Review
+interface AppointmentReviewProps {
+  draft: AppointmentReviewDraft
   patient: Patient
   onClose: () => void
-  onCommitted: (visit: Appointment) => void
+  onCommitted: (appointment: Appointment) => void
   onRefresh: () => Promise<unknown>
 }
 
@@ -16,11 +16,11 @@ const titles = { book: "Review booking", cancel: "Cancel appointment?", reschedu
 const actions = { book: "Confirm booking", cancel: "Confirm cancellation", reschedule: "Confirm reschedule", "edit-notes": "Save local notes" }
 
 /** Collects explicit confirmation for the exact action shown to the patient. */
-export function AppointmentReview({ draft, patient, onClose, onCommitted, onRefresh }: ReviewProps) {
+export function AppointmentReview({ draft, patient, onClose, onCommitted, onRefresh }: AppointmentReviewProps) {
   const dialog = useRef<HTMLDialogElement>(null)
   const pending = useRef(false)
   const lastAttempt = useRef<{ notes: string; id: string } | null>(null)
-  const [notes, setNotes] = useState(draft.kind === "book" ? "" : draft.visit.notes)
+  const [notes, setNotes] = useState(draft.kind === "book" ? "" : draft.appointment.notes)
   const [busy, setBusy] = useState(false)
   const [needsRefresh, setNeedsRefresh] = useState(false)
   const [error, setError] = useState("")
@@ -55,7 +55,7 @@ export function AppointmentReview({ draft, patient, onClose, onCommitted, onRefr
     try {
       const command = confirmedCommand({ draft, notes, requestId })
       const result = operationResultSchema.parse(await sendJson(command))
-      if (result.requestId !== requestId || (draft.kind !== "book" && result.appointment.id !== draft.visit.id)) {
+      if (result.requestId !== requestId || (draft.kind !== "book" && result.appointment.id !== draft.appointment.id)) {
         throw new Error("The server could not confirm this change.")
       }
       onCommitted(result.appointment)
@@ -70,8 +70,8 @@ export function AppointmentReview({ draft, patient, onClose, onCommitted, onRefr
   }
 
   // show the selected slot or the appointment's current confirmed time
-  const doctor = draft.kind === "book" ? draft.doctor : draft.visit.doctor
-  const when = "slot" in draft ? draft.slot : { startsAt: draft.visit.startsAt, timeZone: doctor.timeZone }
+  const doctor = draft.kind === "book" ? draft.doctor : draft.appointment.doctor
+  const when = "slot" in draft ? draft.slot : { startsAt: draft.appointment.startsAt, timeZone: doctor.timeZone }
   return <dialog ref={dialog} className="panel review" aria-labelledby="review-heading" onCancel={event => { event.preventDefault(); if (!pending.current) onClose() }}>
     <form onSubmit={event => { event.preventDefault(); void handleConfirm() }}>
       {/* appointment and patient confirmation details */}
@@ -80,8 +80,8 @@ export function AppointmentReview({ draft, patient, onClose, onCommitted, onRefr
         <dt>Patient</dt><dd>{patient.name}</dd>
         <dt>Doctor</dt><dd>{doctor.name}</dd>
         <dt>Clinic</dt><dd>{doctor.practice} · {doctor.location} {doctor.zip}</dd>
-        {draft.kind === "reschedule" && <><dt>Current time</dt><dd>{formatVisitTime({ startsAt: draft.visit.startsAt, timeZone: doctor.timeZone })}</dd></>}
-        <dt>{draft.kind === "reschedule" ? "New time" : "Time"}</dt><dd>{formatVisitTime(when)}</dd>
+        {draft.kind === "reschedule" && <><dt>Current time</dt><dd>{formatSlotTime({ startsAt: draft.appointment.startsAt, timeZone: doctor.timeZone })}</dd></>}
+        <dt>{draft.kind === "reschedule" ? "New time" : "Time"}</dt><dd>{formatSlotTime(when)}</dd>
       </dl>
       {/* local note and explicit approval */}
       {draft.kind !== "cancel" && <div className="note">

@@ -4,13 +4,13 @@ import { evalReportSchema, type EvalReport } from "@/shared/contracts"
 import { Textarea } from "./components/ui/textarea"
 
 const labels = ["Unreviewed", "Pass", "Fail", "Unsure"] as const
-type Review = { label: typeof labels[number]; notes: string }
-const emptyReview: Review = { label: "Unreviewed", notes: "" }
+type EvalReview = { label: typeof labels[number]; notes: string }
+const emptyReview: EvalReview = { label: "Unreviewed", notes: "" }
 
 /** Compare observed evidence with the expected behavior and export independent human judgments. */
 export function Evals() {
   const [report, setReport] = useState<EvalReport>()
-  const [reviews, setReviews] = useState<Record<string, Review>>({})
+  const [reviews, setReviews] = useState<Record<string, EvalReview>>({})
   const [notice, setNotice] = useState("")
   const [loading, setLoading] = useState(true)
 
@@ -59,7 +59,7 @@ export function Evals() {
         <button className="primary" onClick={handleExport}><Download size={15} />Export JSON</button></div>
       {report.cases.map(c => {
         const review = reviews[c.id] ?? emptyReview
-        const update = (changes: Partial<Review>) => setReviews(current => ({ ...current, [c.id]: { ...(current[c.id] ?? emptyReview), ...changes } }))
+        const update = (changes: Partial<EvalReview>) => setReviews(current => ({ ...current, [c.id]: { ...(current[c.id] ?? emptyReview), ...changes } }))
         return <details className="panel eval-case" key={c.id}>
           <summary><strong>{c.title}</strong><span>{c.status} · {c.durationMs} ms · {review.label}</span></summary>
           <dl><dt>Input</dt><dd>{c.input}</dd><dt>Expected</dt><dd>{c.expected}</dd>
@@ -70,7 +70,7 @@ export function Evals() {
           {c.timings.length > 0 && <details className="eval-timings"><summary>Stage timings</summary>
             <ul>{c.timings.map((t, i) => <li key={i}>{t.stage} · {t.ms} ms</li>)}</ul></details>}
           <label htmlFor={c.id + "-label"}>Human label</label>
-          <select id={c.id + "-label"} value={review.label} onChange={event => update({ label: event.target.value as Review["label"] })}>
+          <select id={c.id + "-label"} value={review.label} onChange={event => update({ label: event.target.value as EvalReview["label"] })}>
             {labels.map(label => <option key={label}>{label}</option>)}</select>
           <label htmlFor={c.id + "-notes"}>Reviewer notes</label>
           <Textarea id={c.id + "-notes"} value={review.notes} rows={2} onChange={event => update({ notes: event.target.value })} />

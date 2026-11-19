@@ -7,18 +7,18 @@ import { Assistant } from "./assistant"
 import { Directory } from "./directory"
 import { Profile } from "./profile"
 import { getDoctors, getSlots, readJson } from "./lib/api"
-import type { Review } from "./lib/review"
+import type { AppointmentReviewDraft } from "./lib/review"
 
-type DeskView = "visits" | "directory" | "profile" | "evals"
+type DeskView = "appointments" | "directory" | "profile" | "evals"
 
 /** Coordinates the one-patient workspace, assistant selections and confirmed server results. */
 export function CareDesk({ evals }: { evals?: ReactNode }) {
   const [schedule, setSchedule] = useState<Schedule>()
   const [error, setError] = useState("")
   const [notice, setNotice] = useState("")
-  const [view, setView] = useState<DeskView>("visits")
+  const [view, setView] = useState<DeskView>("appointments")
   const [openedEvals, setOpenedEvals] = useState(false)
-  const [draft, setDraft] = useState<Review | null>(null)
+  const [draft, setDraft] = useState<AppointmentReviewDraft | null>(null)
   const [search, setSearch] = useState<{ criteria?: DoctorSearch; version: number }>({ version: 0 })
   const generation = useRef(0)
 
@@ -67,33 +67,33 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
     }
 
     // find the patient's active appointment and validate any replacement time
-    const visit = current.appointments.find(item => item.id === intent.appointmentId && (intent.kind === "edit-notes" || item.status === "confirmed"))
-    if (!visit) throw new Error("Unknown appointment.")
+    const appointment = current.appointments.find(item => item.id === intent.appointmentId && (intent.kind === "edit-notes" || item.status === "confirmed"))
+    if (!appointment) throw new Error("Unknown appointment.")
     if (intent.kind === "reschedule") {
-      const slot = (await getSlots(visit.doctor, signal)).find(item => item.id === intent.slotId && item.id !== visit.slotId)
+      const slot = (await getSlots(appointment.doctor, signal)).find(item => item.id === intent.slotId && item.id !== appointment.slotId)
       if (!slot) throw new Error("Unavailable time.")
       signal.throwIfAborted()
-      setDraft({ kind: "reschedule", slot, visit })
-    } else setDraft({ kind: intent.kind, visit })
+      setDraft({ kind: "reschedule", slot, appointment })
+    } else setDraft({ kind: intent.kind, appointment })
   }
 
-  function handleCommitted(visit: Appointment): void {
+  function handleCommitted(appointment: Appointment): void {
     // render only the snapshot acknowledged by the server
     generation.current++
     setSchedule(previous => previous && ({
-      ...previous, appointments: [...previous.appointments.filter(item => item.id !== visit.id), visit]
+      ...previous, appointments: [...previous.appointments.filter(item => item.id !== appointment.id), appointment]
         .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt)),
     }))
     setError("")
     setDraft(null)
     setNotice("Appointment updated.")
-    setView("visits")
+    setView("appointments")
   }
 
-  function handleReview(next: Review): void {
+  function handleReview(next: AppointmentReviewDraft): void {
     setNotice("")
     if (!schedule || error) {
-      setView("visits")
+      setView("appointments")
       return
     }
     setDraft(next)
@@ -109,7 +109,7 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
       {/* workspace navigation */}
       <h1>Care desk</h1>
       <nav aria-label="Care desk views" className="tabs">
-        <button aria-pressed={view === "visits"} onClick={() => setView("visits")}><CalendarDays size={17} />Appointments</button>
+        <button aria-pressed={view === "appointments"} onClick={() => setView("appointments")}><CalendarDays size={17} />Appointments</button>
         <button aria-pressed={view === "directory"} onClick={() => setView("directory")}><Stethoscope size={17} />Find a doctor</button>
         <button aria-pressed={view === "profile"} onClick={() => setView("profile")}><CircleUserRound size={17} />Profile</button>
         {evals && <button aria-pressed={view === "evals"} onClick={() => { setOpenedEvals(true); setView("evals") }}>Evals</button>}
@@ -123,7 +123,7 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
           {openedEvals && <div hidden={view !== "evals"}>{evals}</div>}
           {view === "evals" ? null : view === "directory" ? <Directory key={search.version} criteria={search.criteria} onReview={handleReview} /> :
             !schedule ? (!error && <p role="status">Loading schedule…</p>) :
-            view === "visits" ? <Appointments visits={schedule.appointments} onReview={handleReview} /> :
+            view === "appointments" ? <Appointments appointments={schedule.appointments} onReview={handleReview} /> :
             <Profile patient={schedule.patient} onSave={patient => {
               generation.current++
               setSchedule(previous => previous && ({ ...previous, patient }))

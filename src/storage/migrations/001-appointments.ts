@@ -20,7 +20,7 @@ export async function migrateAppointments(tx: SQL): Promise<void> {
     WHERE table_schema = 'inifinichat_demo' AND table_name = 'appointments' AND column_name = 'slot_id'`
   if (installed) return
 
-  // retain original visit IDs, times and provider display text
+  // retain original appointment IDs, times and provider display text
   await tx`ALTER TABLE inifinichat_demo.patients
     ADD COLUMN created_at timestamptz NOT NULL DEFAULT now(),
     ADD COLUMN updated_at timestamptz NOT NULL DEFAULT now()`
