@@ -21,7 +21,7 @@
 
 ## 3. Evaluation
 
-- [ ] 3.1 Integrate the three feature worktrees and run scheduling cases with human labels and restart checks.
+- [x] 3.1 Integrate the three feature worktrees and run scheduling cases with human labels and restart checks.
 
 ## 4. Optional follow-ups
 

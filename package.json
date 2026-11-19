@@ -12,7 +12,8 @@
     "boundaries": "depcruise --config .dependency-cruiser.json --output-type err src",
     "hooks:install": "git config --local core.hooksPath .githooks",
     "db:seed": "bun --env-file=.env src/storage/seed.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "evals": "bun run build:ui && bun evals/run.ts"
   },
   "dependencies": {
     "@neon/config": "^1.14.4",
@@ -31,6 +32,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "dependency-cruiser": "^18.8.0",
+    "playwright-core": "^1.65.1",
     "tailwindcss": "^4.3.5",
     "typescript": "6.0.3"
   }

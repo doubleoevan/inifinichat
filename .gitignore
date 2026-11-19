@@ -40,3 +40,6 @@ coverage/
 htmlcov/
 *.log
 .neon
+
+# Locally generated scheduling evaluation reports
+.evals/

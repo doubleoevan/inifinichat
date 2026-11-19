@@ -9,6 +9,12 @@ type ProviderFailure = { operation: keyof SchedulingAdapter; code: "conflict" | 
 type MockOptions = { now?: () => number; failure?: ProviderFailure }
 type ProviderCode = "invalid_request" | "not_found" | ProviderFailure["code"]
 
+// match the everyday doctor titles for specialties represented in the fixed directory
+const specialtyByTitle = new Map([
+  ["cardiologist", "cardiology"], ["dermatologist", "dermatology"],
+  ["pediatrician", "pediatrics"], ["primary care physician", "primary care"],
+])
+
 // the application uses the ordinary fixture schedule and system clock
 export const mockZocdoc = createMockZocdoc()
 
@@ -23,8 +29,9 @@ export function createMockZocdoc({ now = Date.now, failure }: MockOptions = {}):
       if (!result.success) throw providerError("invalid_request", "Enter a doctor name or specialty and a five-digit ZIP.")
       simulateFailure(failure, "searchProviders")
       const term = result.data.query.toLowerCase()
+      const specialty = specialtyByTitle.get(term) ?? term
       const matches = doctors.filter(doctor => doctor.zip === result.data.zip
-        && (doctor.name.toLowerCase().includes(term) || doctor.specialty.toLowerCase().includes(term)))
+        && (doctor.name.toLowerCase().includes(term) || doctor.specialty.toLowerCase().includes(specialty)))
       return matches.slice(0, limits.candidates).map(doctor => ({ ...doctor }))
     },
     async getAvailability({ doctorId, locationId }) {

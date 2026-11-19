@@ -92,3 +92,6 @@ export interface SchedulingAdapter {
   cancelAppointment(command: { appointmentId: string; requestId: string }): Promise<{ providerReference: string }>
   rescheduleAppointment(command: { appointmentId: string; requestId: string; slotId: string }): Promise<{ providerReference: string }>
 }
+
+// the review UI and the local eval runner consume the same report format
+export { evalReportSchema, type EvalReport, type EvalResult } from "./evaluation"

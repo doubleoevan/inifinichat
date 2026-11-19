@@ -10,5 +10,5 @@
     "types": ["bun", "react", "react-dom"],
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src", "tests", "neon.ts"]
+  "include": ["src", "tests", "evals", "neon.ts"]
 }

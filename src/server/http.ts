@@ -13,7 +13,7 @@ import { resolveDraft } from "./chat"
 type Directory = { adapter: SchedulingAdapter; listDoctors: () => Doctor[] }
 
 /** Compose the frozen Step 1 endpoints with an injected local provider. */
-export function createSchedulingRoutes(directory: Directory) {
+export function createSchedulingRoutes(directory: Directory, model = { configured: isChatConfigured, interpret: interpretChat }) {
   return {
     "/api/schedule": { GET: () => serve(readSchedule) },
     "/api/patient": {
@@ -46,8 +46,8 @@ export function createSchedulingRoutes(directory: Directory) {
       changeAppointment(requireDatabase(), directory, { kind: "cancel", id: routeId(request), data })) },
     "/api/chat": { POST: (request: Request) => write(request, chatRequestSchema, async data => {
       // interpreting chat never invokes a mutating service
-      if (!isChatConfigured()) throw new SchedulingError("provider_unavailable", "Chat is unavailable. Use the scheduling forms.")
-      const draft = await interpretChat(data, request.signal).catch(() => {
+      if (!model.configured()) throw new SchedulingError("provider_unavailable", "Chat is unavailable. Use the scheduling forms.")
+      const draft = await model.interpret(data, request.signal).catch(() => {
         throw new SchedulingError("provider_unavailable", "Chat could not interpret this request. Use the scheduling forms.")
       })
       return resolveDraft(draft, {

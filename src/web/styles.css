@@ -94,3 +94,16 @@ small { font-size: 12px; }
   .review-details { grid-template-columns: 1fr; gap: 2px; }
   .review-details dd + dt { margin-top: 5px; }
 }
+
+.evals-heading, .evals-export { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .75rem; }
+.evals-export { margin-block: .75rem 1rem; }
+.evals-export p, .eval-case summary span { font-size: .875rem; color: #465b56; }
+.eval-case { margin-block: .6rem; padding: 1rem; overflow-wrap: anywhere; }
+.eval-case summary { cursor: pointer; }
+.eval-case > summary span { display: block; margin-left: 1rem; }
+.eval-case dl { margin-block: 1rem; }
+.eval-case dt, .eval-case label { display: block; font-weight: 600; margin-block: .65rem .25rem; }
+.eval-case dd { margin: 0; }
+.eval-case ul { padding-left: 1.25rem; list-style: disc; }
+.eval-case select { padding: .4rem .6rem; border: 1px solid #778a83; border-radius: .4rem; background: white; }
+.eval-timings { margin-block: .75rem; font-size: .875rem; }

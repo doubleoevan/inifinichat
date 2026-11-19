@@ -17,6 +17,7 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
   const [error, setError] = useState("")
   const [notice, setNotice] = useState("")
   const [view, setView] = useState<DeskView>("visits")
+  const [openedEvals, setOpenedEvals] = useState(false)
   const [draft, setDraft] = useState<Review | null>(null)
   const [search, setSearch] = useState<{ criteria?: DoctorSearch; version: number }>({ version: 0 })
   const generation = useRef(0)
@@ -111,7 +112,7 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
         <button aria-pressed={view === "visits"} onClick={() => setView("visits")}><CalendarDays size={17} />Appointments</button>
         <button aria-pressed={view === "directory"} onClick={() => setView("directory")}><Stethoscope size={17} />Find a doctor</button>
         <button aria-pressed={view === "profile"} onClick={() => setView("profile")}><CircleUserRound size={17} />Profile</button>
-        {evals && <button aria-pressed={view === "evals"} onClick={() => setView("evals")}>Evals</button>}
+        {evals && <button aria-pressed={view === "evals"} onClick={() => { setOpenedEvals(true); setView("evals") }}>Evals</button>}
       </nav>
       {/* patient data and scheduling assistant */}
       <div className="workspace">
@@ -119,7 +120,8 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
           {schedule?.source === "fixture" && <p className="feedback">Offline fixture preview · Connect the database to save changes.</p>}
           {notice && <p role="status" className="feedback">{notice}</p>}
           {error && <div role="alert">{error} <button className="text-button" onClick={() => void refresh().catch(() => {})}>Refresh schedule</button></div>}
-          {view === "evals" ? evals : view === "directory" ? <Directory key={search.version} criteria={search.criteria} onReview={handleReview} /> :
+          {openedEvals && <div hidden={view !== "evals"}>{evals}</div>}
+          {view === "evals" ? null : view === "directory" ? <Directory key={search.version} criteria={search.criteria} onReview={handleReview} /> :
             !schedule ? (!error && <p role="status">Loading schedule…</p>) :
             view === "visits" ? <Appointments visits={schedule.appointments} onReview={handleReview} /> :
             <Profile patient={schedule.patient} onSave={patient => {

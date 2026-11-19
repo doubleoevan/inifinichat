@@ -50,6 +50,40 @@ The integrated smoke test booked a synthetic slot in Neon, edited its note in th
 
 The hook validates the staged environment reference and rejects a tracked real environment file. It then runs the same offline dependency-cruiser policy before each commit. Stage all relevant source and checker inputs first. It checks that the worktree matches the index for those inputs. Build artifacts are in `dist/`. Start the built app from the project root.
 
+## Run and review scheduling evals
+
+Install PostgreSQL server tools (`initdb` and `pg_ctl` on your PATH) and Google Chrome. On macOS, Homebrew's `postgresql@16` works. To use a different installed Chromium binary, set `EVAL_CHROME` to its executable path. Install the locked Bun dependencies from **Run locally** first.
+
+```sh
+bun run evals
+bun run dev
+```
+
+The default runs eight scenarios against the actual app with a fixed April 2030 clock, a deterministic model, the in-process mock directory, and a disposable, password-protected PostgreSQL cluster on loopback. It requires no API credentials and removes the cluster after the run. The persistence case opens a real browser, reloads the page and restarts the Bun process. The two live checks appear as skipped unless explicitly selected.
+
+| Scenario | What to inspect |
+| --- | --- |
+| Specialty and ZIP | The proposed criteria, matching primary care doctor, slot identities and clinic timezone |
+| Similar names | Both Chen candidates in 94110 and the empty result in Oakland |
+| Missing details | Clarification for a missing ZIP, no openings and clinic-local date filtering |
+| Booking | Confirmation required, 100-character note limit, identical replay and conflicting reuse of a request ID |
+| Rescheduling | Occupied replacement restores the original time and note; a valid replacement and local edit persist |
+| Cancellation | Repeated cancellation and return of the released slot |
+| Persistence | Browser refresh, process restart, duplicate-slot rejection and an unavailable database |
+| Untrusted text and ownership | Foreign appointment access, delimiter collisions and escaped note and provider text |
+
+To add the two live checks, use the ignored `.env` and run:
+
+```sh
+bun run evals --neon --openai
+```
+
+The verified run completed all eight offline scenarios and both live checks. The review controls and JSON download also passed a browser check with a separate synthetic review. To repeat that browser check, run `bun evals/review-check.ts` after building the UI.
+
+Either flag works independently. The Neon probe uses temporary synthetic records and cleans them up. The OpenAI case makes one scheduling interpretation request with retries disabled. All directory and provider operations remain mocked. Timings measure elapsed stages and HTTP round trips.
+
+Open **Evals**, expand a scenario, and compare its input, expected behavior, actual response and observed state. Each result starts **Unreviewed** even if the automated checks passed. Select **Pass**, **Fail** or **Unsure**, add evidence in **Reviewer notes**, and click **Export JSON**. You can switch tabs without losing a review. Refreshing the page clears labels and notes. The CLI atomically replaces the local `.evals/latest.json` report after each run; the browser only reads it. [Case-author and reviewer prompts](evals/AGENTS.md)
+
 ## Stage 2 ownership
 
 The feature worktrees start at Step 1 commit `017a602`. Their public interfaces are listed below.
@@ -89,4 +123,4 @@ Search terms allow 80 characters and a five-digit ZIP. The provider result cap i
 
 Neon stores the `patients`, `appointments`, and `appointment_operations` tables. A partial unique index reserves each confirmed slot. A short transaction commits the appointment change and the patient's request-ID result together. Canceling releases the slot. Local notes remain editable on canceled visits. Rescheduling keeps the same doctor and location and saves the replacement time and any note edit together. [OpenSpec design](openspec/changes/inifinichat-scheduling/design.md)
 
-The provider and all directory data are synthetic. Real Zocdoc authentication, live directory access, and handling an uncertain outcome after a provider timeout are deferred. The evaluation screen and human labels belong to Step 3.
+The provider and all directory data are synthetic. Real Zocdoc authentication, live directory access, and handling an uncertain outcome after a provider timeout are deferred. The Evals tab exposes machine observations and lets a reviewer export a separate assessment.
