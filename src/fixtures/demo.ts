@@ -7,13 +7,21 @@ export const demoPatient: Patient = { id: "demo-patient", name: "Avery Morgan" }
 const mission = { locationId: "mission", zip: "94110", location: "San Francisco, CA", timeZone: "America/Los_Angeles" }
 const eastBay = { locationId: "east-bay", zip: "94612", location: "Oakland, CA", timeZone: "America/Los_Angeles" }
 const pacific = { locationId: "pacific", zip: "94115", location: "San Francisco, CA", timeZone: "America/Los_Angeles" }
+const mountainView = { locationId: "mountain-view", zip: "94041", location: "Mountain View, CA", timeZone: "America/Los_Angeles" }
+const sanMateo = { locationId: "san-mateo", zip: "94401", location: "San Mateo, CA", timeZone: "America/Los_Angeles" }
 
 // the two doctors named Chen share a ZIP and have different specialties
 const maya: Doctor = { ...mission, id: "maya-chen", name: "Dr. Maya Chen", specialty: "Primary care", practice: "Mission Family Practice" }
 const noah: Doctor = { ...eastBay, id: "noah-ellis", name: "Dr. Noah Ellis", specialty: "Dermatology", practice: "East Bay Dermatology" }
 const leila: Doctor = { ...pacific, id: "leila-shah", name: "Dr. Leila Shah", specialty: "Cardiology", practice: "Pacific Heart Clinic" }
 const mina: Doctor = { ...mission, id: "mina-chen", name: "Dr. Mina Chen", specialty: "Pediatrics", practice: "Mission Family Practice" }
-export const doctors: Doctor[] = [maya, noah, leila, mina]
+
+// each Peninsula practice offers primary care and a specialty
+const lena: Doctor = { ...mountainView, id: "lena-hart", name: "Dr. Lena Hart", specialty: "Primary care", practice: "Castro Street Clinic" }
+const ravi: Doctor = { ...mountainView, id: "ravi-mistry", name: "Dr. Ravi Mistry", specialty: "Cardiology", practice: "Castro Street Clinic" }
+const elena: Doctor = { ...sanMateo, id: "elena-solis", name: "Dr. Elena Solis", specialty: "Primary care", practice: "Laurel Grove Clinic" }
+const owen: Doctor = { ...sanMateo, id: "owen-park", name: "Dr. Owen Park", specialty: "Dermatology", practice: "Laurel Grove Clinic" }
+export const doctors: Doctor[] = [maya, noah, leila, mina, lena, ravi, elena, owen]
 
 // fixed half-hour openings on April 16–18, 2030. Mina has no openings
 export const slots: Slot[] = [
@@ -24,6 +32,14 @@ export const slots: Slot[] = [
   fixtureSlot(maya, "2030-04-18T16:00:00Z"),
   fixtureSlot(noah, "2030-04-18T21:00:00Z"),
   fixtureSlot(leila, "2030-04-18T22:00:00Z"),
+  fixtureSlot(lena, "2030-04-16T16:00:00Z"),
+  fixtureSlot(lena, "2030-04-17T18:30:00Z"),
+  fixtureSlot(ravi, "2030-04-16T20:00:00Z"),
+  fixtureSlot(ravi, "2030-04-18T17:30:00Z"),
+  fixtureSlot(elena, "2030-04-16T17:00:00Z"),
+  fixtureSlot(elena, "2030-04-18T21:00:00Z"),
+  fixtureSlot(owen, "2030-04-17T16:30:00Z"),
+  fixtureSlot(owen, "2030-04-18T19:00:00Z"),
 ]
 
 // the seeded appointment remains readable outside the directory's fixture dates
