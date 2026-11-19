@@ -19,7 +19,7 @@ bun run db:seed
 bun run dev
 ```
 
-Open **http://127.0.0.1:3000**. Set `PORT` to choose a different port. The dev command builds the browser bundle and watches the server. After editing the browser code, run `bun run build:ui` and refresh.
+Open [http://localhost:3000](http://localhost:3000). Set `PORT` to choose a different port. The dev command builds the browser bundle and watches the server. After editing the browser code, run `bun run build:ui` and refresh.
 
 For an offline preview, skip the seed and run `bun run dev` with an empty `DATABASE_URL`. The desk opens a labeled fixture schedule and mock directory. Booking and verified availability require Neon. The forms work without an OpenAI key. `OPENAI_MODEL` defaults to `gpt-4.1-mini`. Each chat submission makes one bounded server-side call.
 
