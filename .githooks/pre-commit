@@ -9,12 +9,25 @@ if [ -n "$(git ls-files --cached -- .env ':(glob)**/.env' ':(glob)**/.env.local'
 fi
 git cat-file -e :.env.local || { echo "The public environment reference is required." >&2; exit 1; }
 if ! git show :.env.local | awk '
+  BEGIN {
+    count = split("OPENAI_API_KEY DATABASE_URL DATABASE_URL_UNPOOLED NEON_BRANCH NEON_BRANCH_ID NEON_FUNCTION_HOST_SUFFIX", keys)
+    for (i = 1; i <= count; i++) { expected["# " keys[i] "="] = 1 }
+  }
   /^[[:space:]]*$/ { next }
-  /^# (OPENAI_API_KEY=|DATABASE_URL=|ZOCDOC_MODE=mock)$/ { seen[$0]++; next }
+  $0 == "# Copy this file to .env. Uncomment the settings you use and fill in their values there." { next }
+  $0 == "# OpenAI API key for scheduling chat." { next }
+  $0 == "# Pooled Neon connection string for the running app." { next }
+  $0 == "# Direct Neon connection string for migrations and seeding. The seed falls back to DATABASE_URL." { next }
+  $0 == "# Neon branch name and ID." { next }
+  $0 == "# Hostname suffix for Neon Functions." { next }
+  $0 in expected { seen[$0]++; next }
   { invalid = 1 }
-  END { exit (invalid || seen["# OPENAI_API_KEY="] != 1 || seen["# DATABASE_URL="] != 1 || seen["# ZOCDOC_MODE=mock"] != 1) }
+  END {
+    for (line in expected) { if (seen[line] != 1) { invalid = 1 } }
+    exit invalid
+  }
 '; then
-  echo "Stage only the three documented, commented placeholders in .env.local." >&2
+  echo "Stage only the documented comments and six blank, commented settings in .env.local." >&2
   exit 1
 fi
 

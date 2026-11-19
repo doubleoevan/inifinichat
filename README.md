@@ -12,7 +12,7 @@ test -f .env || cp .env.local .env
 bun run hooks:install
 ```
 
-For the full demo, set two active assignments in the ignored `.env`: `OPENAI_API_KEY` for chat and `DATABASE_URL` for the Neon connection string. Keep the public `.env.local` as three commented examples. Then migrate, seed, and start the app from the same folder.
+For the full demo, uncomment and set `OPENAI_API_KEY` for chat and `DATABASE_URL` for Neon in the ignored `.env` file. The public `.env.local` documents each setting with a blank example. Then migrate, seed, and start the app from the same folder.
 
 ```sh
 bun run db:seed
