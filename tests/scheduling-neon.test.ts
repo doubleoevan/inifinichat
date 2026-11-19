@@ -95,8 +95,10 @@ test.skipIf(!runNeon)("real Neon operations survive restart, replay once, exclud
     await probe.stop()
     try {
       await db.begin(async tx => {
-        if (requestIds.length) await tx`DELETE FROM inifinichat_demo.appointment_operations
+        if (requestIds.length) {
+          await tx`DELETE FROM inifinichat_demo.appointment_operations
           WHERE patient_id = ${demoPatient.id} AND request_id IN ${tx(requestIds)}`
+        }
         await tx`DELETE FROM inifinichat_demo.appointments WHERE provider_id = ${doctorId} AND patient_id IN (${demoPatient.id}, ${foreign})`
         await tx`DELETE FROM inifinichat_demo.patients WHERE id = ${foreign}`
       })

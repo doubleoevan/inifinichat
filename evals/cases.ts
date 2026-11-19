@@ -160,7 +160,9 @@ export function schedulingCases(app: Session): Scenario[] {
 export async function execute(scenario: Scenario, mode: string, skip?: string): Promise<EvalResult> {
   const { run, ...info } = scenario
   const result: EvalResult = { ...info, mode, status: "passed", error: null, actual: [], timings: [], durationMs: 0 }
-  if (skip) return { ...result, status: "skipped", error: skip }
+  if (skip) {
+    return { ...result, status: "skipped", error: skip }
+  }
   const begin = performance.now()
   try {
     await run({ observe: text => result.actual.push(text), measure: async (stage, action) => {

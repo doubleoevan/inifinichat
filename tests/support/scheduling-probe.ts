@@ -15,12 +15,16 @@ const adapter: SchedulingAdapter = {
   searchProviders: async () => [doctor],
   getAvailability: async () => slots,
   async bookAppointment(command) {
-    if ("notes" in command) throw new Error("Private notes reached provider.")
+    if ("notes" in command) {
+      throw new Error("Private notes reached provider.")
+    }
     return { providerReference: command.requestId }
   },
   async cancelAppointment(command) { return { providerReference: command.requestId } },
   async rescheduleAppointment(command) {
-    if (command.slotId === slots[3].id) throw new Error("Injected provider error.")
+    if (command.slotId === slots[3].id) {
+      throw new Error("Injected provider error.")
+    }
     return { providerReference: command.requestId }
   },
 }

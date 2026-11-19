@@ -4,7 +4,9 @@ import { migrateAppointments } from "./migrations/001-appointments"
 
 // prefer the direct Neon endpoint for DDL and accept a standalone Postgres URL
 const url = process.env.DATABASE_URL_UNPOOLED || process.env.DATABASE_URL
-if (!url) throw new Error("Set DATABASE_URL in .env before seeding.")
+if (!url) {
+  throw new Error("Set DATABASE_URL in .env before seeding.")
+}
 const database = new SQL({ url, max: 1 })
 
 try {

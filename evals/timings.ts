@@ -16,8 +16,12 @@ export function formatTimings(report: EvalReport): string {
     // the runner writes zero duration for skipped cases before starting its timer
     const total = result.status === "skipped" ? "unmeasured" : `${result.durationMs} ms total`
     lines.push("", `${result.title} · ${result.status} · ${total}`, `  ${result.mode}`)
-    for (const { stage, ms } of result.timings) lines.push(`  ${stage} · ${ms} ms`)
-    if (result.error) lines.push(`  ${result.status === "skipped" ? "Skip reason" : "Error"}: ${result.error}`)
+    for (const { stage, ms } of result.timings) {
+      lines.push(`  ${stage} · ${ms} ms`)
+    }
+    if (result.error) {
+      lines.push(`  ${result.status === "skipped" ? "Skip reason" : "Error"}: ${result.error}`)
+    }
   }
   return lines.join("\n")
 }

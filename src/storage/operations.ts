@@ -25,11 +25,15 @@ export async function changeAppointment(db: SQL, directory: DoctorDirectory, com
     return await db.begin(async tx => {
       // serialize this one patient's confirmed operations and concurrent replays
       const [patient] = await tx`SELECT id FROM inifinichat_demo.patients WHERE id = ${demoPatient.id} FOR UPDATE`
-      if (!patient) throw new Error("Missing synthetic patient.")
+      if (!patient) {
+        throw new Error("Missing synthetic patient.")
+      }
       const [prior] = await tx`SELECT payload_hash, result FROM inifinichat_demo.appointment_operations
         WHERE patient_id = ${patient.id} AND request_id = ${requestId}`
       if (prior) {
-        if (hash !== prior.payload_hash) throw new SchedulingError("conflict", "This request ID was already used for a different change.")
+        if (hash !== prior.payload_hash) {
+          throw new SchedulingError("conflict", "This request ID was already used for a different change.")
+        }
         return operationResultSchema.parse(prior.result)
       }
 
@@ -67,10 +71,14 @@ async function update(tx: SQL, directory: DoctorDirectory, command: Exclude<Appo
   // lock and check ownership before trusting any client-supplied appointment ID
   const [row] = await tx`SELECT * FROM inifinichat_demo.appointments
     WHERE id = ${command.id} AND patient_id = ${demoPatient.id} FOR UPDATE`
-  if (!row) throw new SchedulingError("not_found", "Appointment not found.")
+  if (!row) {
+    throw new SchedulingError("not_found", "Appointment not found.")
+  }
   const current = appointmentFromRow(row)
   if (command.kind === "cancel") {
-    if (current.status === "canceled") return current
+    if (current.status === "canceled") {
+      return current
+    }
     await acknowledge(() => directory.adapter.cancelAppointment({ appointmentId: current.id, requestId: command.data.requestId }))
     const [canceled] = await tx`UPDATE inifinichat_demo.appointments SET status = 'canceled', updated_at = now()
       WHERE id = ${current.id} AND patient_id = ${demoPatient.id} RETURNING *`
@@ -86,7 +94,9 @@ async function update(tx: SQL, directory: DoctorDirectory, command: Exclude<Appo
   }
 
   // the locked appointment remains unchanged unless the new time and notes both commit
-  if (current.status !== "confirmed") throw new SchedulingError("conflict", "A canceled appointment cannot be rescheduled.")
+  if (current.status !== "confirmed") {
+    throw new SchedulingError("conflict", "A canceled appointment cannot be rescheduled.")
+  }
   const { doctor, slot } = await resolveSlot(directory, data.slotId)
   if (doctor.id !== current.doctor.id || doctor.locationId !== current.doctor.locationId || slot.id === current.slotId) {
     throw new SchedulingError("invalid_request", "Choose a different time with the same doctor and location.")
@@ -102,10 +112,14 @@ async function update(tx: SQL, directory: DoctorDirectory, command: Exclude<Appo
 export async function resolveSlot(directory: DoctorDirectory, slotId: string) {
   const [doctorId, locationId] = slotId.split("/")
   const doctor = directory.listDoctors().find(candidate => candidate.id === doctorId && candidate.locationId === locationId)
-  if (!doctor) throw new SchedulingError("not_found", "Provider location not found.")
+  if (!doctor) {
+    throw new SchedulingError("not_found", "Provider location not found.")
+  }
   const candidates = await providerCall(() => directory.adapter.getAvailability({ doctorId, locationId }))
   const candidate = candidates.find(slot => slot.id === slotId)
-  if (!candidate) throw new SchedulingError("not_found", "This slot is no longer offered.")
+  if (!candidate) {
+    throw new SchedulingError("not_found", "This slot is no longer offered.")
+  }
   const slot = slotSchema.safeParse(candidate)
   if (!slot.success || slot.data.timeZone !== doctor.timeZone) {
     throw new SchedulingError("provider_unavailable", "The provider returned an invalid slot.")
@@ -118,10 +132,18 @@ export async function providerCall<T>(call: () => Promise<T>): Promise<T> {
   try { return await call() } catch (error) {
     const code = error && typeof error === "object" && "code" in error ? error.code : undefined
     switch (code) {
-      case "conflict": throw new SchedulingError(code, "The provider reports a scheduling conflict.")
-      case "not_found": throw new SchedulingError(code, "The provider could not find the requested item.")
-      case "invalid_request": throw new SchedulingError(code, "The provider rejected the scheduling request.")
-      default: throw new SchedulingError("provider_unavailable", "The scheduling provider is unavailable.")
+      case "conflict": {
+        throw new SchedulingError(code, "The provider reports a scheduling conflict.")
+      }
+      case "not_found": {
+        throw new SchedulingError(code, "The provider could not find the requested item.")
+      }
+      case "invalid_request": {
+        throw new SchedulingError(code, "The provider rejected the scheduling request.")
+      }
+      default: {
+        throw new SchedulingError("provider_unavailable", "The scheduling provider is unavailable.")
+      }
     }
   }
 }

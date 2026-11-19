@@ -20,7 +20,9 @@ function chatBody(message: string, turns: Turn[]): ChatRequest {
   // keep the pending message intact and trim the oldest context first
   const recent = history.slice(-limits.historyTurns)
   const encoder = new TextEncoder()
-  while (recent.length && encoder.encode(JSON.stringify({ message, history: recent })).length > limits.bodyBytes) recent.shift()
+  while (recent.length && encoder.encode(JSON.stringify({ message, history: recent })).length > limits.bodyBytes) {
+    recent.shift()
+  }
   return { message, history: recent }
 }
 
@@ -38,11 +40,17 @@ export function Assistant({ onIntent }: AssistantProps) {
   useEffect(() => {
     const controller = new AbortController()
     readJson("/api/status", { signal: controller.signal }).then(status => {
-      if (controller.signal.aborted) return
+      if (controller.signal.aborted) {
+        return
+      }
       const ready = typeof status === "object" && status !== null && "chatConfigured" in status && status.chatConfigured === true
       setEnabled(ready)
       setNotice(ready ? "" : "Chat is unavailable. You can still use Find a doctor.")
-    }).catch(() => { if (!controller.signal.aborted) setNotice("Chat is unavailable. You can still use Find a doctor.") })
+    }).catch(() => {
+      if (!controller.signal.aborted) {
+        setNotice("Chat is unavailable. You can still use Find a doctor.")
+      }
+    })
     return () => { controller.abort(); active.current?.abort(); resolving.current?.abort() }
   }, [])
 
@@ -64,7 +72,9 @@ export function Assistant({ onIntent }: AssistantProps) {
 
   async function handleAsk(): Promise<void> {
     const question = message.trim()
-    if (!enabled || active.current || !question) return
+    if (!enabled || active.current || !question) {
+      return
+    }
 
     // compare controller identity before publishing a response or status
     const controller = new AbortController()
@@ -73,13 +83,20 @@ export function Assistant({ onIntent }: AssistantProps) {
     setNotice("")
     try {
       const response = chatReplySchema.parse(await sendJson({ url: "/api/chat", method: "POST", body: chatBody(question, turns), signal: controller.signal }))
-      if (active.current !== controller) return
+      if (active.current !== controller) {
+        return
+      }
       setTurns(previous => [...previous, { question, response }])
       setMessage("")
     } catch (failure) {
-      if (active.current === controller) setNotice(failure instanceof Error ? failure.message : "Message failed. You can use the scheduling forms.")
+      if (active.current === controller) {
+        setNotice(failure instanceof Error ? failure.message : "Message failed. You can use the scheduling forms.")
+      }
     } finally {
-      if (active.current === controller) { active.current = null; setBusy(false) }
+      if (active.current === controller) {
+        active.current = null
+        setBusy(false)
+      }
     }
   }
 
@@ -91,9 +108,13 @@ export function Assistant({ onIntent }: AssistantProps) {
     setNotice("Checking current availability…")
     try {
       await onIntent(intent, controller.signal)
-      if (!controller.signal.aborted) setNotice("")
+      if (!controller.signal.aborted) {
+        setNotice("")
+      }
     } catch {
-      if (!controller.signal.aborted) setNotice("This selection is unavailable. Check your appointments or find another time.")
+      if (!controller.signal.aborted) {
+        setNotice("This selection is unavailable. Check your appointments or find another time.")
+      }
     }
   }
 
@@ -105,7 +126,11 @@ export function Assistant({ onIntent }: AssistantProps) {
     <div className="turns" aria-live="polite">{turns.map(({ question, response }, index) =>
       <div key={index}><p className="question">{question}</p><p>{response.reply}</p>
         {response.intent?.kind === "clarify" && response.intent.question !== response.reply && <p>{response.intent.question}</p>}
-        {response.intent && response.intent.kind !== "clarify" && <button className="secondary" onClick={() => { if (response.intent) void handleIntent(response.intent) }}>
+        {response.intent && response.intent.kind !== "clarify" && <button className="secondary" onClick={() => {
+          if (response.intent) {
+            void handleIntent(response.intent)
+          }
+        }}>
           {intentLabels[response.intent.kind]}
         </button>}
       </div>)}</div>

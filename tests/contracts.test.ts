@@ -29,5 +29,7 @@ test("note commands accept 100 characters and reject 101", async () => {
   expect(await readCommand(request(notes), appointmentUpdateSchema)).toEqual({ input: { ...exampleNoteUpdate, notes } })
   const invalid = await readCommand(request(notes + "x"), appointmentUpdateSchema)
   expect("error" in invalid && invalid.error.status).toBe(400)
-  if ("error" in invalid) expect((await invalid.error.json()).code).toBe("invalid_request")
+  if ("error" in invalid) {
+    expect((await invalid.error.json()).code).toBe("invalid_request")
+  }
 })

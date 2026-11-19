@@ -6,3 +6,5 @@
 Wait for Evan's assignment before starting Step 1. The assignment and Evan's latest instructions take priority over the queue's starting plan.
 
 Before implementing a selected task, use the Notion MCP to read the current project page, the selected queue row, and its dependencies. Use the installed skills and ship command by their exact names. Step 0 is manual setup. Run the ship command only after setup.
+
+Use multiline braces for every TypeScript control-flow body, including single-statement guards, loops, and nonempty switch clauses.

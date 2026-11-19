@@ -27,10 +27,15 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
     const current = ++generation.current
     try {
       const next = scheduleSchema.parse(await readJson("/api/schedule", { signal }))
-      if (!signal?.aborted && current === generation.current) { setSchedule(next); setError("") }
+      if (!signal?.aborted && current === generation.current) {
+        setSchedule(next)
+        setError("")
+      }
       return next
     } catch (failure) {
-      if (!signal?.aborted && current === generation.current) setError("Your schedule could not be loaded.")
+      if (!signal?.aborted && current === generation.current) {
+        setError("Your schedule could not be loaded.")
+      }
       throw failure
     }
   }
@@ -44,7 +49,9 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
 
   async function handleIntent(intent: NonNullable<ChatReply["intent"]>, signal: AbortSignal): Promise<void> {
     // apply search criteria through the ordinary directory form
-    if (intent.kind === "clarify") return
+    if (intent.kind === "clarify") {
+      return
+    }
     if (intent.kind === "search") {
       setSearch(previous => ({ criteria: intent.criteria, version: previous.version + 1 }))
       setView("directory")
@@ -58,9 +65,13 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
       const [doctorId, locationId] = intent.slotId.split("/")
       const doctors = await getDoctors(new URLSearchParams(), signal)
       const doctor = doctors.find(item => item.id === doctorId && item.locationId === locationId)
-      if (!doctor) throw new Error("Unknown clinic.")
+      if (!doctor) {
+        throw new Error("Unknown clinic.")
+      }
       const slot = (await getSlots(doctor, signal)).find(item => item.id === intent.slotId)
-      if (!slot) throw new Error("Unavailable time.")
+      if (!slot) {
+        throw new Error("Unavailable time.")
+      }
       signal.throwIfAborted()
       setDraft({ kind: "book", doctor, slot })
       return
@@ -68,13 +79,19 @@ export function CareDesk({ evals }: { evals?: ReactNode }) {
 
     // find the patient's active appointment and validate any replacement time
     const appointment = current.appointments.find(item => item.id === intent.appointmentId && (intent.kind === "edit-notes" || item.status === "confirmed"))
-    if (!appointment) throw new Error("Unknown appointment.")
+    if (!appointment) {
+      throw new Error("Unknown appointment.")
+    }
     if (intent.kind === "reschedule") {
       const slot = (await getSlots(appointment.doctor, signal)).find(item => item.id === intent.slotId && item.id !== appointment.slotId)
-      if (!slot) throw new Error("Unavailable time.")
+      if (!slot) {
+        throw new Error("Unavailable time.")
+      }
       signal.throwIfAborted()
       setDraft({ kind: "reschedule", slot, appointment })
-    } else setDraft({ kind: intent.kind, appointment })
+    } else {
+      setDraft({ kind: intent.kind, appointment })
+    }
   }
 
   function handleCommitted(appointment: Appointment): void {

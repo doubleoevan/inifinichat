@@ -18,18 +18,34 @@ export function Evals() {
     setLoading(true)
     try {
       const response = await fetch("/api/evals", { cache: "no-store", signal })
-      if (response.status === 404) throw new Error("Run bun run evals in the project folder, then load the results here.")
-      if (!response.ok) throw new Error("The evaluation report could not be loaded.")
-      const next = evalReportSchema.parse(await response.json())
-      if (signal?.aborted) return
-      if (report && next.runId !== report.runId && Object.values(reviews).some(r => r.label !== "Unreviewed" || r.notes)) {
-        if (!window.confirm("Open the new run and discard this run’s unexported reviews?")) return
+      if (response.status === 404) {
+        throw new Error("Run bun run evals in the project folder, then load the results here.")
       }
-      if (next.runId !== report?.runId) setReviews({})
+      if (!response.ok) {
+        throw new Error("The evaluation report could not be loaded.")
+      }
+      const next = evalReportSchema.parse(await response.json())
+      if (signal?.aborted) {
+        return
+      }
+      if (report && next.runId !== report.runId && Object.values(reviews).some(r => r.label !== "Unreviewed" || r.notes)) {
+        if (!window.confirm("Open the new run and discard this run’s unexported reviews?")) {
+          return
+        }
+      }
+      if (next.runId !== report?.runId) {
+        setReviews({})
+      }
       setReport(next);setNotice("")
     } catch (error) {
-      if (!signal?.aborted) setNotice(error instanceof Error ? error.message : "The report could not be loaded.")
-    } finally { if (!signal?.aborted) setLoading(false) }
+      if (!signal?.aborted) {
+        setNotice(error instanceof Error ? error.message : "The report could not be loaded.")
+      }
+    } finally {
+      if (!signal?.aborted) {
+        setLoading(false)
+      }
+    }
   }
 
   // access to the tab only reads the report; running the CLI is an explicit local action
@@ -40,7 +56,9 @@ export function Evals() {
   }, [])
 
   function handleExport() {
-    if (!report) return
+    if (!report) {
+      return
+    }
     const saved = { ...report, cases: report.cases.map(c => ({ ...c, review: reviews[c.id] ?? emptyReview })) }
     const url = URL.createObjectURL(new Blob([JSON.stringify(saved, null, 2)], { type: "application/json" }))
     const link = document.createElement("a")

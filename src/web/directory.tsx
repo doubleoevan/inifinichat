@@ -28,8 +28,14 @@ export function Directory({ criteria, onReview }: DirectoryProps) {
     setExpanded("")
     const query = search ? new URLSearchParams({ q: search.query, zip: search.zip }) : new URLSearchParams()
     getDoctors(query, controller.signal).then(items => {
-      if (!controller.signal.aborted) setDoctors(items)
-    }).catch(() => { if (!controller.signal.aborted) setError("The directory could not be loaded. Search again to retry.") })
+      if (!controller.signal.aborted) {
+        setDoctors(items)
+      }
+    }).catch(() => {
+      if (!controller.signal.aborted) {
+        setError("The directory could not be loaded. Search again to retry.")
+      }
+    })
     return () => controller.abort()
   }, [search])
 

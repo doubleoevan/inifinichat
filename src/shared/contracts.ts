@@ -23,7 +23,9 @@ export function makeSlotId(slot: { doctorId: string; locationId: string; startsA
 
 export const slotIdSchema = z.string().max(190).refine(value => {
   const [doctorId, locationId, startsAt, ...rest] = value.split("/")
-  if (!startsAt || rest.length || !idSchema.safeParse(doctorId).success || !idSchema.safeParse(locationId).success) return false
+  if (!startsAt || rest.length || !idSchema.safeParse(doctorId).success || !idSchema.safeParse(locationId).success) {
+    return false
+  }
   return instantSchema.safeParse(startsAt).success && new Date(startsAt).toISOString() === startsAt
 })
 

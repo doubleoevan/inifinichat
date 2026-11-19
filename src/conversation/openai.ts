@@ -26,7 +26,9 @@ export function isChatConfigured(): boolean { return Boolean(client) }
 
 /** Interpret dialogue as a proposal without exposing appointments, notes or provider records. */
 export async function interpretChat(request: ChatRequest, signal: AbortSignal): Promise<ModelDraft> {
-  if (!client) throw new Error("OpenAI is unavailable.")
+  if (!client) {
+    throw new Error("OpenAI is unavailable.")
+  }
 
   // keep dialogue in one untrusted user message and instructions in the developer channel
   const response = await client.responses.create({
@@ -36,7 +38,9 @@ export async function interpretChat(request: ChatRequest, signal: AbortSignal): 
     text: { format: { type: "json_schema", name: "scheduling_draft", strict: true, schema: outputJsonSchema } },
     store: false, max_output_tokens: limits.outputTokens,
   }, { signal })
-  if (response.status !== "completed") throw new Error("Incomplete scheduling draft.")
+  if (response.status !== "completed") {
+    throw new Error("Incomplete scheduling draft.")
+  }
   return parseModelDraft(response.output_text)
 }
 
@@ -44,13 +48,17 @@ export async function interpretChat(request: ChatRequest, signal: AbortSignal): 
 export function frameDialogue(request: ChatRequest, nonce: () => string = crypto.randomUUID.bind(crypto)): string {
   const content = JSON.stringify(request)
   let marker = nonce()
-  while (content.includes(marker)) marker = nonce()
+  while (content.includes(marker)) {
+    marker = nonce()
+  }
   return `BEGIN_DIALOGUE_${marker}\n${content}\nEND_DIALOGUE_${marker}`
 }
 
 /** Reject malformed, oversized and unexpected model output before resolving any references. */
 export function parseModelDraft(output: string): ModelDraft {
-  if (output.length > limits.bodyBytes) throw new Error("Oversized scheduling draft.")
+  if (output.length > limits.bodyBytes) {
+    throw new Error("Oversized scheduling draft.")
+  }
   return outputSchema.parse(JSON.parse(output)).intent
 }
 

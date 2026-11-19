@@ -9,7 +9,9 @@ export async function readJson(url: string, options: RequestInit = {}): Promise<
   const body = await response.json().catch(() => null)
 
   // expose only the API's public error text
-  if (!response.ok) throw new Error(typeof body?.error === "string" ? body.error : "The request could not be completed.")
+  if (!response.ok) {
+    throw new Error(typeof body?.error === "string" ? body.error : "The request could not be completed.")
+  }
   return body
 }
 

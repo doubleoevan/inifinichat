@@ -22,15 +22,19 @@ export function confirmedCommand(input: { draft: AppointmentReviewDraft; request
   const confirmation = { requestId, confirmed: true as const }
 
   // review the selected provider slot for a new appointment
-  if (draft.kind === "book") return {
-    url: "/api/appointments", method: "POST" as const,
-    body: bookingSchema.parse({ ...confirmation, slotId: draft.slot.id, notes }),
+  if (draft.kind === "book") {
+    return {
+      url: "/api/appointments", method: "POST" as const,
+      body: bookingSchema.parse({ ...confirmation, slotId: draft.slot.id, notes }),
+    }
   }
 
   // update the selected patient's appointment by its server-issued ID
   const url = `/api/appointments/${encodeURIComponent(draft.appointment.id)}`
-  if (draft.kind === "cancel") return {
-    url: url + "/cancel", method: "POST" as const, body: cancellationSchema.parse(confirmation),
+  if (draft.kind === "cancel") {
+    return {
+      url: url + "/cancel", method: "POST" as const, body: cancellationSchema.parse(confirmation),
+    }
   }
   const edit = draft.kind === "reschedule" ? { action: draft.kind, slotId: draft.slot.id, notes } : { action: draft.kind, notes }
   return { url, method: "PATCH" as const, body: appointmentUpdateSchema.parse({ ...confirmation, ...edit }) }

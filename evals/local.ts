@@ -11,17 +11,23 @@ export function isolatedEnv(database = "", openai = false) {
 
 /** A private loopback cluster exercises the same PostgreSQL migration and constraints as Neon. */
 export async function startPostgres() {
-  if (!Bun.which("initdb") || !Bun.which("pg_ctl")) throw new Error("Install PostgreSQL client and server tools (initdb and pg_ctl) to run the offline database cases.")
+  if (!Bun.which("initdb") || !Bun.which("pg_ctl")) {
+    throw new Error("Install PostgreSQL client and server tools (initdb and pg_ctl) to run the offline database cases.")
+  }
   const dir = await mkdtemp(join(tmpdir(), "inifinichat-eval-"))
   const data = join(dir, "data")
   const password = crypto.randomUUID()
   let running = false
   const run = async (cmd: string[], env = isolatedEnv()) => {
     const proc = Bun.spawn(cmd, { env, stdout: "ignore", stderr: "ignore" })
-    if (await proc.exited) throw new Error(`${cmd[0]} failed during temporary database setup.`)
+    if (await proc.exited) {
+      throw new Error(`${cmd[0]} failed during temporary database setup.`)
+    }
   }
   async function stop() {
-    if (running) await run(["pg_ctl", "-D", data, "-m", "fast", "-w", "stop"])
+    if (running) {
+      await run(["pg_ctl", "-D", data, "-m", "fast", "-w", "stop"])
+    }
     await rm(dir, { recursive: true, force: true })
   }
   try {

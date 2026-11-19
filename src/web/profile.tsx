@@ -15,13 +15,17 @@ export function Profile({ patient, onSave }: ProfileProps) {
   async function handleSave(): Promise<void> {
     // validate the editable field before sending it to the profile route
     const input = profileUpdateSchema.safeParse({ name })
-    if (pending.current || !input.success) return
+    if (pending.current || !input.success) {
+      return
+    }
     pending.current = true
     setBusy(true)
     setNotice("")
     try {
       const saved = patientSchema.parse(await sendJson({ url: "/api/patient", method: "PATCH", body: input.data }))
-      if (saved.id !== patient.id) throw new Error("The profile could not be verified.")
+      if (saved.id !== patient.id) {
+        throw new Error("The profile could not be verified.")
+      }
       onSave(saved)
       setName(saved.name)
       setNotice("Profile saved.")

@@ -10,13 +10,17 @@ const database = config.DATABASE_URL ? new SQL({ url: config.DATABASE_URL, max: 
 
 /** Require durable storage before returning authoritative state. */
 export function requireDatabase(): SQL {
-  if (!database) throw new Error("Database connection unavailable.")
+  if (!database) {
+    throw new Error("Database connection unavailable.")
+  }
   return database
 }
 
 /** Reads the synthetic patient's schedule or the labeled offline preview. */
 export async function readSchedule(): Promise<Schedule> {
-  if (!database) return { source: "fixture", patient: demoPatient, appointments: [demoAppointment] }
+  if (!database) {
+    return { source: "fixture", patient: demoPatient, appointments: [demoAppointment] }
+  }
 
   // return both parts from the same database snapshot
   return database.begin("READ ONLY, ISOLATION LEVEL REPEATABLE READ", async tx => ({
@@ -47,7 +51,9 @@ export async function readAppointments(db: SQL = requireDatabase()): Promise<App
 
 /** Remove every occupied candidate, including slots booked by another owner. */
 export async function availableSlots<T extends { id: string }>(slots: T[], db: SQL = requireDatabase()): Promise<T[]> {
-  if (!slots.length) return []
+  if (!slots.length) {
+    return []
+  }
 
   // compare canonical identities without exposing other patients' appointments
   const occupied = await db<{ slot_id: string }[]>`SELECT slot_id FROM inifinichat_demo.appointments WHERE status = 'confirmed'

@@ -26,7 +26,9 @@ export function createMockZocdoc({ now = Date.now, failure }: MockOptions = {}):
     async searchProviders(criteria) {
       // validate and search both supported fields within the selected ZIP
       const result = searchSchema.safeParse(criteria)
-      if (!result.success) throw providerError("invalid_request", "Enter a doctor name or specialty and a five-digit ZIP.")
+      if (!result.success) {
+        throw providerError("invalid_request", "Enter a doctor name or specialty and a five-digit ZIP.")
+      }
       simulateFailure(failure, "searchProviders")
       const term = result.data.query.toLowerCase()
       const specialty = specialtyByTitle.get(term) ?? term
@@ -51,7 +53,9 @@ export function createMockZocdoc({ now = Date.now, failure }: MockOptions = {}):
     },
     async bookAppointment(command) {
       // validate the confirmed command and its selected fixture slot
-      if (!bookingSchema.safeParse(command).success) throw providerError("invalid_request", "Invalid booking command.")
+      if (!bookingSchema.safeParse(command).success) {
+        throw providerError("invalid_request", "Invalid booking command.")
+      }
       requireBookableSlot(command.slotId, now())
       simulateFailure(failure, "bookAppointment")
       return { providerReference: `mock-book-${command.requestId}` }
@@ -84,10 +88,16 @@ export function listDemoDoctors(): Doctor[] {
  */
 function requireBookableSlot(slotId: string, cutoff: number): void {
   // distinguish malformed, unknown and expired selections
-  if (!slotIdSchema.safeParse(slotId).success) throw providerError("invalid_request", "Invalid slot ID.")
+  if (!slotIdSchema.safeParse(slotId).success) {
+    throw providerError("invalid_request", "Invalid slot ID.")
+  }
   const slot = slots.find(candidate => candidate.id === slotId)
-  if (!slot) throw providerError("not_found", "Unknown mock slot.")
-  if (Date.parse(slot.startsAt) <= cutoff) throw providerError("conflict", "This mock slot has already started.")
+  if (!slot) {
+    throw providerError("not_found", "Unknown mock slot.")
+  }
+  if (Date.parse(slot.startsAt) <= cutoff) {
+    throw providerError("conflict", "This mock slot has already started.")
+  }
 }
 
 /**
@@ -103,7 +113,9 @@ function validateAppointmentCommand(command: { appointmentId: string; requestId:
  * Applies a deterministic failure to the operation named by a test.
  */
 function simulateFailure(failure: ProviderFailure | undefined, operation: keyof SchedulingAdapter): void {
-  if (failure?.operation === operation) throw providerError(failure.code, "Simulated mock provider failure.")
+  if (failure?.operation === operation) {
+    throw providerError(failure.code, "Simulated mock provider failure.")
+  }
 }
 
 /**

@@ -18,7 +18,9 @@ export async function migrateAppointments(tx: SQL): Promise<void> {
   // the slot column and all accompanying changes commit together
   const [installed] = await tx`SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'inifinichat_demo' AND table_name = 'appointments' AND column_name = 'slot_id'`
-  if (installed) return
+  if (installed) {
+    return
+  }
 
   // retain original appointment IDs, times and provider display text
   await tx`ALTER TABLE inifinichat_demo.patients

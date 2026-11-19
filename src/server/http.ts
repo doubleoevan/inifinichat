@@ -21,15 +21,21 @@ export function createSchedulingRoutes(directory: DoctorDirectory, model = { con
     "/api/doctors": { GET: (request: Request) => serve(async () => {
       // an empty query opens the directory; submitted criteria require both fields
       const params = new URL(request.url).searchParams
-      if (!params.size) return directory.listDoctors()
+      if (!params.size) {
+        return directory.listDoctors()
+      }
       const criteria = searchSchema.safeParse({ query: params.get("q"), zip: params.get("zip") })
-      if (!criteria.success) throw new SchedulingError("invalid_request", "Enter a doctor name or specialty and a five-digit US ZIP.")
+      if (!criteria.success) {
+        throw new SchedulingError("invalid_request", "Enter a doctor name or specialty and a five-digit US ZIP.")
+      }
       return providerCall(async () => doctorSchema.array().max(limits.candidates).parse(await directory.adapter.searchProviders(criteria.data)))
     }) },
     "/api/doctors/:id/availability": { GET: (request: Request) => serve(async () => {
       const doctorId = routeId(request)
       const locationId = new URL(request.url).searchParams.get("locationId")
-      if (!locationId || !idSchema.safeParse(locationId).success) throw new SchedulingError("invalid_request", "A location ID is required.")
+      if (!locationId || !idSchema.safeParse(locationId).success) {
+        throw new SchedulingError("invalid_request", "A location ID is required.")
+      }
       const slots = await providerCall(async () => slotSchema.array().parse(await directory.adapter.getAvailability({ doctorId, locationId })))
       return availableSlots(slots)
     }) },
@@ -44,7 +50,9 @@ export function createSchedulingRoutes(directory: DoctorDirectory, model = { con
       changeAppointment(requireDatabase(), directory, { kind: "cancel", id: routeId(request), data })) },
     "/api/chat": { POST: (request: Request) => write(request, chatRequestSchema, async data => {
       // interpreting chat never invokes a mutating service
-      if (!model.configured()) throw new SchedulingError("provider_unavailable", "Chat is unavailable. Use the scheduling forms.")
+      if (!model.configured()) {
+        throw new SchedulingError("provider_unavailable", "Chat is unavailable. Use the scheduling forms.")
+      }
       const draft = await model.interpret(data, request.signal).catch(() => {
         throw new SchedulingError("provider_unavailable", "Chat could not interpret this request. Use the scheduling forms.")
       })
@@ -56,7 +64,9 @@ export function createSchedulingRoutes(directory: DoctorDirectory, model = { con
             const { slot } = await resolveSlot(directory, slotId)
             return (await availableSlots([slot])).length > 0
           } catch (error) {
-            if (error instanceof SchedulingError && error.code === "not_found") return false
+            if (error instanceof SchedulingError && error.code === "not_found") {
+              return false
+            }
             throw error
           }
         },
@@ -67,13 +77,17 @@ export function createSchedulingRoutes(directory: DoctorDirectory, model = { con
 
 function routeId(request: Request): string {
   const id = new URL(request.url).pathname.split("/")[3]
-  if (!idSchema.safeParse(id).success) throw new SchedulingError("invalid_request", "Invalid resource ID.")
+  if (!idSchema.safeParse(id).success) {
+    throw new SchedulingError("invalid_request", "Invalid resource ID.")
+  }
   return id
 }
 
 async function write<T>(request: Request, schema: z.ZodType<T>, apply: (input: T) => Promise<unknown>): Promise<Response> {
   const command = await readCommand(request, schema)
-  if ("error" in command) return command.error
+  if ("error" in command) {
+    return command.error
+  }
   return serve(() => apply(command.input))
 }
 
@@ -104,17 +118,23 @@ export function apiError(status: number, code: ApiError["code"], error: string):
  */
 export async function readCommand<T>(request: Request, schema: z.ZodType<T>): Promise<{ input: T } | { error: Response }> {
   const origin = request.headers.get("Origin")
-  if (origin && origin !== new URL(request.url).origin) return { error: apiError(403, "forbidden", "Cross-origin writes are disabled.") }
+  if (origin && origin !== new URL(request.url).origin) {
+    return { error: apiError(403, "forbidden", "Cross-origin writes are disabled.") }
+  }
   if (request.headers.get("Content-Type")?.split(";")[0] !== "application/json") {
     return { error: apiError(415, "unsupported_media_type", "Send application/json.") }
   }
 
   // enforce the cap on bytes actually received as well as Bun's request-size limit
   const bytes = await request.arrayBuffer()
-  if (bytes.byteLength > limits.bodyBytes) return { error: apiError(413, "payload_too_large", "Request body is too large.") }
+  if (bytes.byteLength > limits.bodyBytes) {
+    return { error: apiError(413, "payload_too_large", "Request body is too large.") }
+  }
   try {
     const parsed = schema.safeParse(JSON.parse(new TextDecoder().decode(bytes)))
-    if (parsed.success) return { input: parsed.data }
+    if (parsed.success) {
+      return { input: parsed.data }
+    }
   } catch { /* invalid JSON uses the same public validation error */ }
   return { error: apiError(400, "invalid_request", "Request does not match the scheduling contract.") }
 }

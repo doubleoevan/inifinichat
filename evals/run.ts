@@ -5,7 +5,9 @@ import { execute, schedulingCases, type Session } from "./cases"
 import { seedOtherOwner, startPostgres, startProbe } from "./local"
 
 const flags = new Set(process.argv.slice(2))
-if ([...flags].some(flag => !["--neon", "--openai"].includes(flag))) throw new Error("Supported eval flags: --neon and --openai.")
+if ([...flags].some(flag => !["--neon", "--openai"].includes(flag))) {
+  throw new Error("Supported eval flags: --neon and --openai.")
+}
 const cases: EvalResult[] = []
 let database: Awaited<ReturnType<typeof startPostgres>> | undefined
 let app: Awaited<ReturnType<typeof startProbe>> | undefined
@@ -47,7 +49,9 @@ cases.push(await execute({ id: "live-neon", title: "Live Neon persistence", inpu
         env: { ...process.env, RUN_NEON_TESTS: "1", OPENAI_API_KEY: "" }, stdout: "pipe", stderr: "pipe",
       })
       const [stdout, stderr, exit] = await Promise.all([new Response(child.stdout).text(), new Response(child.stderr).text(), child.exited])
-      if (exit) throw new Error("Live Neon probes failed. Run the documented Neon test command for diagnostics.")
+      if (exit) {
+        throw new Error("Live Neon probes failed. Run the documented Neon test command for diagnostics.")
+      }
       return stdout + stderr
     })
     assert(output.includes("Neon PASS:") && /2 pass\b/.test(output) && /0 fail\b/.test(output))
@@ -91,5 +95,9 @@ await Bun.write(temp, JSON.stringify(report, null, 2))
 await rename(temp, ".evals/latest.json")
 const count = (status: EvalResult["status"]) => cases.filter(c => c.status === status).length
 console.log(`${count("passed")} passed, ${count("failed")} failed, ${count("skipped")} skipped; ${cases.length} unreviewed. Open the Evals tab.`)
-for (const result of cases.filter(c => c.id.startsWith("live-"))) console.log(result.status, result.title, result.error ?? "")
-if (count("failed") || unavailable || cases.some(c => c.status === "skipped" && flags.has(c.id.replace("live-", "--")))) process.exitCode = 1
+for (const result of cases.filter(c => c.id.startsWith("live-"))) {
+  console.log(result.status, result.title, result.error ?? "")
+}
+if (count("failed") || unavailable || cases.some(c => c.status === "skipped" && flags.has(c.id.replace("live-", "--")))) {
+  process.exitCode = 1
+}

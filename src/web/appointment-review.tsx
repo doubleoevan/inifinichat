@@ -44,13 +44,17 @@ export function AppointmentReview({ draft, patient, onClose, onCommitted, onRefr
   }
 
   async function handleConfirm(): Promise<void> {
-    if (pending.current || needsRefresh) return
+    if (pending.current || needsRefresh) {
+      return
+    }
 
     // retain one ID across retries of the same patient-confirmed payload
     pending.current = true
     setBusy(true)
     setError("")
-    if (lastAttempt.current?.notes !== notes) lastAttempt.current = { notes, id: crypto.randomUUID() }
+    if (lastAttempt.current?.notes !== notes) {
+      lastAttempt.current = { notes, id: crypto.randomUUID() }
+    }
     const requestId = lastAttempt.current.id
     try {
       const command = confirmedCommand({ draft, notes, requestId })
@@ -72,7 +76,12 @@ export function AppointmentReview({ draft, patient, onClose, onCommitted, onRefr
   // show the selected slot or the appointment's current confirmed time
   const doctor = draft.kind === "book" ? draft.doctor : draft.appointment.doctor
   const when = "slot" in draft ? draft.slot : { startsAt: draft.appointment.startsAt, timeZone: doctor.timeZone }
-  return <dialog ref={dialog} className="panel review" aria-labelledby="review-heading" onCancel={event => { event.preventDefault(); if (!pending.current) onClose() }}>
+  return <dialog ref={dialog} className="panel review" aria-labelledby="review-heading" onCancel={event => {
+    event.preventDefault()
+    if (!pending.current) {
+      onClose()
+    }
+  }}>
     <form onSubmit={event => { event.preventDefault(); void handleConfirm() }}>
       {/* appointment and patient confirmation details */}
       <h2 id="review-heading">{titles[draft.kind]}</h2>
