@@ -62,3 +62,35 @@ small { font-size: 12px; }
   .workspace { grid-template-columns: 1fr; padding-top: 24px; }
   .patient { font-size: 12px; }
 }
+
+/* scheduling forms and clinic choices */
+.action-row, .slot-list { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 15px; }
+.slot-list { margin-top: 5px; }
+.visit + .visit { margin-top: 18px; }
+.note h4, .replacement h4 { font-size: 14px; font-weight: 650; margin: 0 0 5px; }
+.note p, .feedback, .profile span { font-size: 14px; overflow-wrap: anywhere; }
+.note p { white-space: pre-wrap; }
+.replacement { margin-top: 18px; }
+.search-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: end; }
+.search-form small { align-self: center; }
+.search-form .primary { justify-self: start; }
+.profile input { margin-top: 6px; }
+.feedback { color: #23513e; margin-bottom: 12px; }
+.turns button { margin: 8px 0 3px; }
+[role="alert"] { margin: 12px 0; color: #884026; overflow-wrap: anywhere; }
+
+/* native confirmation dialog */
+.review { position: fixed; inset: 0; margin: auto; width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 32px); overflow: auto; color: inherit; }
+.review::backdrop { background: rgb(14 36 27 / 45%); }
+.review-details { display: grid; grid-template-columns: max-content 1fr; gap: 9px 16px; margin: 0; font-size: 14px; }
+.review-details dt { color: #52645a; }
+.review-details dd { margin: 0; overflow-wrap: anywhere; }
+.tabs { flex-wrap: wrap; column-gap: clamp(10px, 3vw, 26px); }
+.patient { overflow-wrap: anywhere; min-width: 0; }
+.patient svg { flex-shrink: 0; }
+@media (max-width: 420px) {
+  .search-form { grid-template-columns: 1fr; }
+  .tabs button { gap: 4px; }
+  .review-details { grid-template-columns: 1fr; gap: 2px; }
+  .review-details dd + dt { margin-top: 5px; }
+}

@@ -1,24 +1,42 @@
-import { makeSlotId } from "@/shared/contracts"
-import type { Appointment, Doctor, Patient, Slot } from "@/shared/contracts"
+import { makeSlotId, type Appointment, type Doctor, type Patient, type Slot } from "@/shared/contracts"
 
-// synthetic records shared by the offline demo, database seed and tests
+// synthetic patient shared by the offline preview and the database seed
 export const demoPatient: Patient = { id: "demo-patient", name: "Avery Morgan" }
 
-export const doctors: Doctor[] = [
-  { id: "maya-chen", locationId: "mission", zip: "94110", timeZone: "America/Los_Angeles", name: "Dr. Maya Chen", specialty: "Primary care", practice: "Mission Family Practice", location: "San Francisco, CA" },
-  { id: "noah-ellis", locationId: "east-bay", zip: "94612", timeZone: "America/Los_Angeles", name: "Dr. Noah Ellis", specialty: "Dermatology", practice: "East Bay Dermatology", location: "Oakland, CA" },
-  { id: "leila-shah", locationId: "pacific", zip: "94115", timeZone: "America/Los_Angeles", name: "Dr. Leila Shah", specialty: "Cardiology", practice: "Pacific Heart Clinic", location: "San Francisco, CA" },
+// fixed practice locations in the synthetic Bay Area directory
+const mission = { locationId: "mission", zip: "94110", location: "San Francisco, CA", timeZone: "America/Los_Angeles" }
+const eastBay = { locationId: "east-bay", zip: "94612", location: "Oakland, CA", timeZone: "America/Los_Angeles" }
+const pacific = { locationId: "pacific", zip: "94115", location: "San Francisco, CA", timeZone: "America/Los_Angeles" }
+
+// the two doctors named Chen share a ZIP and have different specialties
+const maya: Doctor = { ...mission, id: "maya-chen", name: "Dr. Maya Chen", specialty: "Primary care", practice: "Mission Family Practice" }
+const noah: Doctor = { ...eastBay, id: "noah-ellis", name: "Dr. Noah Ellis", specialty: "Dermatology", practice: "East Bay Dermatology" }
+const leila: Doctor = { ...pacific, id: "leila-shah", name: "Dr. Leila Shah", specialty: "Cardiology", practice: "Pacific Heart Clinic" }
+const mina: Doctor = { ...mission, id: "mina-chen", name: "Dr. Mina Chen", specialty: "Pediatrics", practice: "Mission Family Practice" }
+export const doctors: Doctor[] = [maya, noah, leila, mina]
+
+// fixed half-hour openings on April 16–18, 2030. Mina has no openings
+export const slots: Slot[] = [
+  fixtureSlot(maya, "2030-04-16T17:30:00Z"),
+  fixtureSlot(noah, "2030-04-17T21:00:00Z"),
+  fixtureSlot(leila, "2030-04-18T16:00:00Z"),
+  fixtureSlot(maya, "2030-04-16T18:00:00Z"),
+  fixtureSlot(maya, "2030-04-18T16:00:00Z"),
+  fixtureSlot(noah, "2030-04-18T21:00:00Z"),
+  fixtureSlot(leila, "2030-04-18T22:00:00Z"),
 ]
 
-export const slots: Slot[] = doctors.map((doctor, index) => {
-  // use absolute fixture instants and stable provider location IDs
-  const startsAt = ["2030-04-16T17:30:00Z", "2030-04-17T21:00:00Z", "2030-04-18T16:00:00Z"][index]
+// the seeded visit remains readable outside the directory's fixture dates
+const firstVisit = fixtureSlot(maya, "2030-04-10T16:30:00Z")
+export const demoAppointment: Appointment = {
+  id: "demo-visit", doctor: maya, startsAt: firstVisit.startsAt, slotId: firstVisit.id,
+  status: "confirmed", notes: "",
+}
+
+/**
+ * Derives a slot's identity from its provider, location and fixed start.
+ */
+function fixtureSlot(doctor: Doctor, startsAt: string): Slot {
   const identity = { doctorId: doctor.id, locationId: doctor.locationId, startsAt }
   return { ...identity, id: makeSlotId(identity), timeZone: doctor.timeZone }
-})
-
-const firstVisit = { doctorId: doctors[0].id, locationId: doctors[0].locationId, startsAt: "2030-04-10T16:30:00Z" }
-export const demoAppointment: Appointment = {
-  id: "demo-visit", doctor: doctors[0], startsAt: firstVisit.startsAt, slotId: makeSlotId(firstVisit),
-  status: "confirmed", notes: "",
 }

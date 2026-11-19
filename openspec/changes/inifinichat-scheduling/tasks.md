@@ -8,16 +8,16 @@
 
 ## 2-a. Mock Zocdoc
 
-- [ ] 2-a.1 Complete mock search, candidate slots, deterministic mutation responses and failure fixtures.
+- [x] 2-a.1 Complete mock search, candidate slots, deterministic mutation responses and failure fixtures.
 
 ## 2-b. Appointments
 
-- [ ] 2-b.1 Migrate the three-table data model and implement patient-owned transaction, deduplication and note operations.
-- [ ] 2-b.2 Interpret chat as validated drafts and complete the scheduling API against the provider interface.
+- [x] 2-b.1 Migrate the three-table data model and implement patient-owned transaction, deduplication and note operations.
+- [x] 2-b.2 Interpret chat as validated drafts and complete the scheduling API against the provider interface.
 
 ## 2-c. Web interface
 
-- [ ] 2-c.1 Implement profile edits, confirmation, cancellation, rescheduling, persisted local notes and chat draft selection.
+- [x] 2-c.1 Implement profile edits, confirmation, cancellation, rescheduling, persisted local notes and chat draft selection.
 
 ## 3. Evaluation
 
