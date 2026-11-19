@@ -1,0 +1,20 @@
+{
+  "forbidden": [
+    { "name": "no-cycles", "severity": "error", "from": {}, "to": { "circular": true } },
+    { "name": "resolve-all-imports", "severity": "error", "from": { "path": "^src/" }, "to": { "couldNotResolve": true } },
+    { "name": "web-uses-public-contracts", "severity": "error", "from": { "path": "^src/web/" }, "to": { "path": "^src/(?!web/|shared/)" } },
+    { "name": "web-has-no-server-packages", "severity": "error", "from": { "path": "^src/web/" }, "to": { "path": "(^bun$|^node:|node_modules/(openai|@neon)/)", "dependencyTypesNot": ["type-only"] } },
+    { "name": "shared-is-independent", "severity": "error", "from": { "path": "^src/shared/" }, "to": { "pathNot": "^src/shared/" } },
+    { "name": "fixtures-use-contracts", "severity": "error", "from": { "path": "^src/fixtures/" }, "to": { "path": "^src/(?!fixtures/|shared/)" } },
+    { "name": "storage-is-isolated", "severity": "error", "from": { "path": "^src/storage/" }, "to": { "path": "^src/(?!storage/|fixtures/|shared/)" } },
+    { "name": "mock-is-isolated", "severity": "error", "from": { "path": "^src/zocdoc/" }, "to": { "path": "^src/(?!zocdoc/|fixtures/|shared/)" } },
+    { "name": "conversation-uses-contracts", "severity": "error", "from": { "path": "^src/conversation/" }, "to": { "path": "^src/(?!conversation/|shared/)" } },
+    { "name": "server-cannot-import-browser-or-seed", "severity": "error", "from": { "path": "^src/server/" }, "to": { "path": "^src/(web/|storage/seed\\.)" } }
+  ],
+  "options": {
+    "doNotFollow": { "path": "node_modules" },
+    "tsPreCompilationDeps": true,
+    "tsConfig": { "fileName": "tsconfig.json" },
+    "enhancedResolveOptions": { "exportsFields": ["exports"], "conditionNames": ["types", "import", "default"] }
+  }
+}

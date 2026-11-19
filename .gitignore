@@ -1,0 +1,42 @@
+# IDE and operating system files
+.idea/
+*.iml
+*.ipr
+*.iws
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Local configuration
+.env
+.env.*
+!.env.example
+!.env.sample
+!.env.template
+!/.env.local
+.claude/settings.local.json
+
+# Dependencies and caches
+node_modules/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.gradle/
+
+# Build output, test coverage, and logs
+build/
+dist/
+out/
+target/
+.next/
+*.tsbuildinfo
+coverage/
+.coverage
+htmlcov/
+*.log
+.neon

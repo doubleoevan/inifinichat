@@ -1,0 +1,40 @@
+{
+  "version": 2,
+  "skills": {
+    "code-style": {
+      "source": "doubleoevan/skills",
+      "commit": "267b0f41d0465e9ac237f3af29936922e58898f3",
+      "sourceType": "github",
+      "skillPath": "skills/code-style/SKILL.md",
+      "computedHash": "ea5618ef252a2a45228d85df39cdfb602f05d996fc0389a0a9a597c4e42e75ae"
+    },
+    "git-discipline": {
+      "source": "doubleoevan/skills",
+      "commit": "267b0f41d0465e9ac237f3af29936922e58898f3",
+      "sourceType": "github",
+      "skillPath": "skills/git-discipline/SKILL.md",
+      "computedHash": "c452c2d2d2d057a80c975a270fef7b2e6365d7f6cf0b07c9d289bbe62891bc08"
+    },
+    "jsx-conventions": {
+      "source": "doubleoevan/skills",
+      "commit": "267b0f41d0465e9ac237f3af29936922e58898f3",
+      "sourceType": "github",
+      "skillPath": "skills/jsx-conventions/SKILL.md",
+      "computedHash": "72fedf376c0228b582bb3821a1ed4f99d3e10f946f29808ef7fcd59621ba7259"
+    },
+    "ponytail": {
+      "source": "DietrichGebert/ponytail",
+      "commit": "96608e078b2d5ea607c5c3b8b5a54d1c1fba6846",
+      "sourceType": "github",
+      "skillPath": "skills/ponytail/SKILL.md",
+      "computedHash": "56d72677aca02689ac89bd48734e8c19b40ab86716d1257eaf5f1238b43cda6b"
+    },
+    "write-docs": {
+      "source": "doubleoevan/skills",
+      "commit": "267b0f41d0465e9ac237f3af29936922e58898f3",
+      "sourceType": "github",
+      "skillPath": "skills/write-docs/SKILL.md",
+      "computedHash": "08dcace57753334e9d87d34757a75ccbc6d37d980261c11dcdf0bdd87aecd446"
+    }
+  }
+}

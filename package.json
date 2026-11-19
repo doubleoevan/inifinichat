@@ -1,0 +1,36 @@
+{
+  "name": "inifinichat",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.3",
+  "scripts": {
+    "dev": "bun run build:ui && bun --env-file=.env --watch src/server/server.ts",
+    "build:ui": "bun build src/web/main.tsx --target browser --minify --outfile dist/app.js && tailwindcss -i src/web/styles.css -o dist/app.css --minify",
+    "build": "bun run build:ui && bun build src/server/server.ts --target bun --packages external --outfile dist/server.js",
+    "start": "bun --env-file=.env dist/server.js",
+    "typecheck": "tsc --noEmit",
+    "boundaries": "depcruise --config .dependency-cruiser.json --output-type err src",
+    "hooks:install": "git config --local core.hooksPath .githooks",
+    "db:seed": "bun --env-file=.env src/storage/seed.ts",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@neon/config": "^1.14.4",
+    "@neon/env": "^2.1.7",
+    "clsx": "^2.1.1",
+    "lucide-react": "^1.76.0",
+    "openai": "^7.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tailwind-merge": "^3.7.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.5",
+    "@types/bun": "^1.4.4",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "dependency-cruiser": "^18.8.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "6.0.3"
+  }
+}
