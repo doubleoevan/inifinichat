@@ -1,5 +1,5 @@
 import { doctors, slots } from "@/fixtures/demo"
-import type { SchedulingAdapter } from "@/shared/contracts"
+import { limits, type Doctor, type SchedulingAdapter } from "@/shared/contracts"
 
 /**
  * Signals that the selected scheduling operation is still a scaffold.
@@ -10,19 +10,25 @@ async function pendingAppointmentWrite(): Promise<never> {
 
 // keep searches and availability deterministic across demo runs
 export const mockZocdoc: SchedulingAdapter = {
-  async search({ query, location }) {
+  async searchProviders({ query, zip }) {
     // compare both supported search fields without changing display text
     const term = query.trim().toLowerCase()
-    const place = location.trim().toLowerCase()
     return doctors.filter(doctor =>
       `${doctor.name} ${doctor.specialty}`.toLowerCase().includes(term)
-      && doctor.location.toLowerCase().includes(place),
-    )
+      && doctor.zip === zip,
+    ).slice(0, limits.candidates)
   },
-  async availability(doctorId) {
-    return slots.filter(slot => slot.doctorId === doctorId)
+  async getAvailability({ doctorId, locationId }) {
+    return slots.filter(slot => slot.doctorId === doctorId && slot.locationId === locationId)
   },
-  book: pendingAppointmentWrite,
-  cancel: pendingAppointmentWrite,
-  reschedule: pendingAppointmentWrite,
+  bookAppointment: pendingAppointmentWrite,
+  cancelAppointment: pendingAppointmentWrite,
+  rescheduleAppointment: pendingAppointmentWrite,
+}
+
+/**
+ * Returns the synthetic directory for the unfiltered opening view.
+ */
+export function listDemoDoctors(): Doctor[] {
+  return [...doctors]
 }

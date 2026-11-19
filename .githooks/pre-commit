@@ -2,7 +2,23 @@
 set -eu
 cd "$(git rev-parse --show-toplevel)"
 
-# The checker reads the worktree. Every input must match the staged snapshot.
+# Check the exact files Git would publish, including a force-added .env.
+if [ -n "$(git ls-files --cached -- .env ':(glob)**/.env' ':(glob)**/.env.local' ':(exclude,top).env.local')" ]; then
+  echo "Keep real environment files out of Git." >&2
+  exit 1
+fi
+git cat-file -e :.env.local || { echo "The public environment reference is required." >&2; exit 1; }
+if ! git show :.env.local | awk '
+  /^[[:space:]]*$/ { next }
+  /^# (OPENAI_API_KEY=|DATABASE_URL=|ZOCDOC_MODE=mock)$/ { seen[$0]++; next }
+  { invalid = 1 }
+  END { exit (invalid || seen["# OPENAI_API_KEY="] != 1 || seen["# DATABASE_URL="] != 1 || seen["# ZOCDOC_MODE=mock"] != 1) }
+'; then
+  echo "Stage only the three documented, commented placeholders in .env.local." >&2
+  exit 1
+fi
+
+# All inputs must match the index before checking the working tree.
 set -- src tsconfig.json .dependency-cruiser.json package.json bun.lock .githooks/pre-commit
 if ! git diff --quiet -- "$@" || [ -n "$(git ls-files --others --exclude-standard -- "$@")" ]; then
   echo "Module boundary inputs have unstaged changes. Stage or set aside those edits first." >&2

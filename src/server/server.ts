@@ -1,48 +1,65 @@
 import { askAssistant, isChatConfigured } from "@/conversation/openai"
+import { bookingSchema, cancellationSchema, chatRequestSchema, idSchema, limits, profileUpdateSchema, searchSchema, visitUpdateSchema } from "@/shared/contracts"
 import { readSchedule } from "@/storage/schedule"
-import { mockZocdoc } from "@/zocdoc/mock"
+import { listDemoDoctors, mockZocdoc } from "@/zocdoc/mock"
+import { config } from "./config"
+import { apiError, pendingWrite, readCommand } from "./http"
 
-// serve a fixed asset list and the API from the same loopback origin
+// serve browser assets and the scheduling API on the same local origin
 const server = Bun.serve({
-  hostname: "127.0.0.1",
-  port: Number(process.env.PORT || 3000),
-  maxRequestBodySize: 8_192,
+  hostname: "127.0.0.1", port: config.PORT, maxRequestBodySize: limits.bodyBytes,
   routes: {
     "/": { GET: () => new Response(Bun.file("src/web/index.html")) },
     "/assets/app.js": { GET: () => new Response(Bun.file("dist/app.js")) },
     "/assets/app.css": { GET: () => new Response(Bun.file("dist/app.css")) },
-    "/api/schedule": { GET: async () => Response.json(await readSchedule(), { headers: { "Cache-Control": "no-store" } }) },
-    "/api/doctors": { GET: async request => {
-      const parameters = new URL(request.url).searchParams
-      return Response.json(await mockZocdoc.search({ query: parameters.get("q") ?? "", location: parameters.get("location") ?? "" }))
-    } },
-    "/api/doctors/:id/availability": { GET: async request => Response.json(await mockZocdoc.availability(request.params.id)) },
-    "/api/chat": { POST: handleChat },
+    "/api/health": { GET: () => Response.json({ status: "ok", zocdocMode: config.ZOCDOC_MODE }) },
     "/api/status": { GET: () => Response.json({ chatConfigured: isChatConfigured() }) },
+    "/api/schedule": { GET: async () => Response.json(await readSchedule(), { headers: { "Cache-Control": "no-store" } }) },
+    "/api/patient": {
+      GET: async () => Response.json((await readSchedule()).patient),
+      PATCH: request => pendingWrite(request, profileUpdateSchema),
+    },
+    "/api/appointments": {
+      GET: async () => Response.json((await readSchedule()).appointments),
+      POST: request => pendingWrite(request, bookingSchema),
+    },
+    "/api/appointments/:id": { PATCH: request => idSchema.safeParse(request.params.id).success
+      ? pendingWrite(request, visitUpdateSchema) : apiError(400, "invalid_request", "Invalid appointment ID.") },
+    "/api/appointments/:id/cancel": { POST: request => idSchema.safeParse(request.params.id).success
+      ? pendingWrite(request, cancellationSchema) : apiError(400, "invalid_request", "Invalid appointment ID.") },
+    "/api/doctors": { GET: searchDirectory },
+    "/api/doctors/:id/availability": { GET: async request => {
+      const locationId = new URL(request.url).searchParams.get("locationId")
+      if (!idSchema.safeParse(request.params.id).success || !locationId || !idSchema.safeParse(locationId).success) {
+        return apiError(400, "invalid_request", "A provider and location ID are required.")
+      }
+      return Response.json(await mockZocdoc.getAvailability({ doctorId: request.params.id, locationId }))
+    } },
+    "/api/chat": { POST: handleChat },
   },
-  fetch: () => Response.json({ error: "Not found." }, { status: 404 }),
-  error: () => Response.json({ error: "Service unavailable. Check local configuration and database setup." }, { status: 503 }),
+  fetch: () => apiError(404, "not_found", "Route not found."),
+  error: () => apiError(503, "database_unavailable", "Service unavailable. Check local database setup."),
 })
 console.log(`Inifinichat listening on ${server.url}`)
 
+async function searchDirectory(request: Request): Promise<Response> {
+  // show the fixture directory until the user submits both search fields
+  const parameters = new URL(request.url).searchParams
+  if (!parameters.size) return Response.json(listDemoDoctors())
+  const criteria = searchSchema.safeParse({ query: parameters.get("q"), zip: parameters.get("zip") })
+  if (!criteria.success) return apiError(400, "invalid_request", "Enter a doctor name or specialty and a five-digit US ZIP.")
+  return Response.json(await mockZocdoc.searchProviders(criteria.data))
+}
+
 async function handleChat(request: Request): Promise<Response> {
-  // accept JSON from this origin or a local command-line client
-  const origin = request.headers.get("Origin")
-  if (origin && origin !== new URL(request.url).origin) return new Response(null, { status: 403 })
-  if (request.headers.get("Content-Type")?.split(";")[0] !== "application/json") return new Response(null, { status: 415 })
+  const command = await readCommand(request, chatRequestSchema)
+  if ("error" in command) return command.error
+  if (!isChatConfigured()) return apiError(503, "provider_unavailable", "Set OPENAI_API_KEY in .env to enable chat.")
 
-  // bound the message before making a single provider request
-  const body: unknown = await request.json().catch(() => null)
-  const message = body && typeof body === "object" && "message" in body ? body.message : null
-  if (typeof message !== "string" || !message.trim() || message.length > 1500) {
-    return Response.json({ error: "Enter a message of 1 to 1,500 characters." }, { status: 400 })
-  }
-  if (!isChatConfigured()) return Response.json({ error: "Set OPENAI_API_KEY in .env to enable chat." }, { status: 503 })
-
-  // keep provider errors and credentials out of the response
+  // keep provider errors out of the public response
   try {
-    return Response.json(await askAssistant(message.trim(), request.signal))
+    return Response.json(await askAssistant(command.input, request.signal))
   } catch {
-    return Response.json({ error: "The assistant could not respond. Please try again." }, { status: 502 })
+    return apiError(502, "provider_unavailable", "The assistant could not respond. Please try again.")
   }
 }

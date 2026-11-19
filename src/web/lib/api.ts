@@ -13,9 +13,9 @@ export async function readJson<T>(url: string, options?: RequestInit): Promise<T
 /**
  * Formats the appointment in the clinic's local time zone.
  */
-export function formatVisitTime(startsAt: string): string {
+export function formatVisitTime({ startsAt, timeZone }: { startsAt: string; timeZone: string }): string {
   return new Intl.DateTimeFormat("en-US", {
     month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit",
-    timeZone: "America/Los_Angeles", timeZoneName: "short",
+    timeZone, timeZoneName: "short",
   }).format(new Date(startsAt))
 }

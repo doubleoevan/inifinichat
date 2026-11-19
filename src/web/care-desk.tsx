@@ -27,7 +27,7 @@ export function CareDesk() {
       {/* project identity and patient context */}
       <header className="masthead"><div className="frame flex items-center justify-between gap-4">
         <div className="brand"><PanelsTopLeft size={24} aria-hidden="true" />Inifinichat</div>
-        <span className="patient"><CircleUserRound size={18} aria-hidden="true" />{schedule?.patient.name || "Demo patient"} · Demo</span>
+        <span className="patient"><CircleUserRound size={18} aria-hidden="true" />{schedule?.patient.name || "Demo patient"} · Mock appointments</span>
       </div></header>
       <main className="frame">
         {/* workspace title and navigation */}

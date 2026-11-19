@@ -24,7 +24,7 @@ try {
       VALUES (${demoPatient.id}, ${demoPatient.name}) ON CONFLICT (id) DO NOTHING`
     await transaction`INSERT INTO inifinichat_demo.appointments (id, patient_id, doctor, starts_at, status)
       VALUES (${demoAppointment.id}, ${demoPatient.id}, ${JSON.stringify(demoAppointment.doctor)}::text::jsonb,
-              ${demoAppointment.startsAt}, ${demoAppointment.status}) ON CONFLICT (id) DO NOTHING`
+              ${demoAppointment.startsAt}, 'booked') ON CONFLICT (id) DO NOTHING`
   })
   console.log("Demo schema and seed committed.")
 } finally {

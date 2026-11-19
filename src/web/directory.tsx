@@ -29,10 +29,10 @@ export function Directory() {
       <form className="search-form" onSubmit={event => {
         event.preventDefault()
         const fields = new FormData(event.currentTarget)
-        setFilters(new URLSearchParams({ q: String(fields.get("q") || ""), location: String(fields.get("location") || "") }).toString())
+        setFilters(new URLSearchParams({ q: String(fields.get("q") || ""), zip: String(fields.get("zip") || "") }).toString())
       }}>
-        <label>Doctor or specialty<Input name="q" placeholder="e.g. Primary care" /></label>
-        <label>Location<Input name="location" placeholder="City or state" /></label>
+        <label>Doctor or specialty<Input name="q" required maxLength={80} placeholder="e.g. Primary care" /></label>
+        <label>US ZIP<Input name="zip" required inputMode="numeric" pattern="[0-9]{5}" maxLength={5} placeholder="e.g. 94110" /></label>
         <button className="primary" type="submit"><Search size={16} />Search</button>
       </form>
       {/* results */}
@@ -52,7 +52,7 @@ function DoctorListing({ doctor }: { doctor: Doctor }) {
     // read the mock provider's slots on demand
     try {
       setError("")
-      setSlots(await readJson<Slot[]>(`/api/doctors/${doctor.id}/availability`))
+      setSlots(await readJson<Slot[]>(`/api/doctors/${doctor.id}/availability?locationId=${doctor.locationId}`))
     } catch { setError("Available times could not be loaded.") }
   }
 
@@ -61,7 +61,7 @@ function DoctorListing({ doctor }: { doctor: Doctor }) {
       <span className="specialty">{doctor.specialty}</span><h3>{doctor.name}</h3>
       <p>{doctor.practice} · {doctor.location}</p>
       <button onClick={handleAvailability} className="text-button">View availability</button>
-      <div role="status">{error}{slots?.length === 0 && "No openings."}{slots?.map(slot => <p key={slot.id}>{formatVisitTime(slot.startsAt)}</p>)}</div>
+      <div role="status">{error}{slots?.length === 0 && "No openings."}{slots?.map(slot => <p key={slot.id}>{formatVisitTime(slot)}</p>)}</div>
     </article>
   )
 }

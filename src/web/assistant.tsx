@@ -1,3 +1,4 @@
+import { Textarea } from "./components/ui/textarea"
 import { useEffect, useState } from "react"
 import { ArrowUpRight, MessageCircle } from "lucide-react"
 import type { ChatReply } from "@/shared/contracts"
@@ -53,7 +54,7 @@ export function Assistant() {
       {/* message composer */}
       <form onSubmit={event => { event.preventDefault(); void handleAsk() }}>
         <label htmlFor="message" className="sr-only">Your scheduling question</label>
-        <textarea id="message" placeholder="Ask a scheduling question…" rows={3} maxLength={1500}
+        <Textarea id="message" placeholder="Ask a scheduling question…" rows={3} maxLength={1500}
           value={message} disabled={!enabled || busy} onChange={event => setMessage(event.target.value)} />
         <button className="primary" type="submit" disabled={!enabled || busy || !message.trim()}>{busy ? "Sending…" : "Send message"}<ArrowUpRight size={16} /></button>
       </form>
