@@ -84,6 +84,22 @@ Either flag works independently. The Neon probe uses temporary synthetic records
 
 Open **Evals**, expand a scenario, and compare its input, expected behavior, actual response and observed state. Each result starts **Unreviewed** even if the automated checks passed. Select **Pass**, **Fail** or **Unsure**, add evidence in **Reviewer notes**, and click **Export JSON**. You can switch tabs without losing a review. Refreshing the page clears labels and notes. The CLI atomically replaces the local `.evals/latest.json` report after each run; the browser only reads it. [Case-author and reviewer prompts](evals/AGENTS.md)
 
+### Timing observations
+
+Run `bun evals/timings.ts` to print five scenarios from the existing `.evals/latest.json`, including every recorded stage, outcome and error. To read an exported run, pass its JSON path. Human labels are optional for this command.
+
+These samples come from run `6e7ab359-a007-400d-b5ec-5ce35fe7669c` on November 19, 2026. Each total covers the whole scenario. All five passed with no case errors. All five used mock Zocdoc.
+
+| Scenario | Model and storage | Total (ms) | Selected observations (ms) |
+| --- | --- | ---: | --- |
+| Specialty and ZIP | Fixture model, local Postgres | 24.1 | Chat 4.6, directory 4.3, availability 10.6, second directory lookup 0.4 |
+| Confirm and replay a booking | Fixture mode, local Postgres | 13.7 | Initial booking 4.7, replay 1.8, changed-payload rejection 1.4. The case expected two HTTP 400s and one 409. |
+| Refresh, restart and outages | Fixture mode, local Postgres | 1,953.0 | Browser reload and Bun restart together 1,881.7. The database-outage probe took 55.4 and returned the expected 503. |
+| Live Neon persistence | No model, real Neon | 8,587.5 | The two HTTP and persistence probes together took 8,587.1, including process restart and cleanup. |
+| Live OpenAI interpretation | Real OpenAI, no database | 1,454.9 | Chat HTTP round trip 1,346.9, then mock directory lookup 6.5. |
+
+The restart case explicitly relaunched Bun. The OpenAI probe started a fresh local app process. Provider and database cache warmth were unrecorded. Each scenario has one observation in this sample.
+
 ## Stage 2 ownership
 
 The feature worktrees start at Step 1 commit `017a602`. Their public interfaces are listed below.
